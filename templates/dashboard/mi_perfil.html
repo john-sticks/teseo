@@ -1,0 +1,273 @@
+{% extends 'base.html' %}
+
+{% block title %}Mi Perfil - Sistema REF{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="dashboard-content">
+        <div class="row">
+        <!-- Información del Perfil -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Información del Perfil</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="username" class="form-label">Nombre de Usuario</label>
+                                    <input type="text" class="form-control" id="username" 
+                                           value="{{ user.username }}" readonly>
+                                    <small class="text-muted">El nombre de usuario no se puede cambiar</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="rol" class="form-label">Rol</label>
+                                    <input type="text" class="form-control" id="rol" 
+                                           value="{{ perfil.get_rol_display }}" readonly>
+                                    <small class="text-muted">El rol es asignado por un administrador</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="first_name" class="form-label">Nombre</label>
+                                    <input type="text" class="form-control" id="first_name" name="first_name" 
+                                           value="{{ user.first_name }}">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="last_name" class="form-label">Apellido</label>
+                                    <input type="text" class="form-control" id="last_name" name="last_name" 
+                                           value="{{ user.last_name }}">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="email" name="email" 
+                                           value="{{ user.email }}">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="telefono" class="form-label">Teléfono</label>
+                                    <input type="text" class="form-control" id="telefono" name="telefono" 
+                                           value="{{ perfil.telefono }}">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="departamento" class="form-label">Departamento</label>
+                                    <input type="text" class="form-control" id="departamento" name="departamento" 
+                                           value="{{ perfil.departamento }}">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="cargo" class="form-label">Cargo</label>
+                                    <input type="text" class="form-control" id="cargo" name="cargo" 
+                                           value="{{ perfil.cargo }}">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    <label for="nueva_password" class="form-label">Nueva Contraseña</label>
+                                    <input type="password" class="form-control" id="nueva_password" name="nueva_password" 
+                                           placeholder="Dejar en blanco para mantener la actual">
+                                    <small class="text-muted">Mínimo 8 caracteres</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Actualizar Perfil
+                            </button>
+                            <a href="{% url 'dashboard:dashboard' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Volver
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Información de Sesión -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Información de Sesión</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <strong>Estado de la Cuenta:</strong>
+                        {% if user.is_active %}
+                        <span class="badge bg-success">Activa</span>
+                        {% else %}
+                        <span class="badge bg-danger">Inactiva</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <strong>Última Actividad:</strong><br>
+                        <small class="text-muted">
+                            {% if perfil.ultima_actividad %}
+                                {{ perfil.ultima_actividad|date:"d/m/Y H:i" }}
+                            {% else %}
+                                No disponible
+                            {% endif %}
+                        </small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <strong>Fecha de Creación:</strong><br>
+                        <small class="text-muted">
+                            {% if perfil.fecha_creacion %}
+                                {{ perfil.fecha_creacion|date:"d/m/Y H:i" }}
+                            {% else %}
+                                No disponible
+                            {% endif %}
+                        </small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <strong>Permisos:</strong>
+                        <ul class="list-unstyled mt-2">
+                            <li>
+                                <i class="fas fa-{% if perfil.puede_ver_relato_hecho %}check text-success{% else %}times text-danger{% endif %}"></i>
+                                Ver Relato del Hecho
+                            </li>
+                            <li>
+                                <i class="fas fa-{% if perfil.puede_editar_datos %}check text-success{% else %}times text-danger{% endif %}"></i>
+                                Editar Datos
+                            </li>
+                            <li>
+                                <i class="fas fa-{% if perfil.puede_sincronizar %}check text-success{% else %}times text-danger{% endif %}"></i>
+                                Sincronizar
+                            </li>
+                            <li>
+                                <i class="fas fa-{% if perfil.puede_exportar %}check text-success{% else %}times text-danger{% endif %}"></i>
+                                Exportar
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="d-grid">
+                        <form method="post" action="{% url 'dashboard:cerrar_sesion_otras' %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-warning btn-sm w-100" 
+                                    onclick="return confirm('¿Estás seguro de cerrar otras sesiones?')">
+                                <i class="fas fa-sign-out-alt"></i> Cerrar Otras Sesiones
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Historial de Actividad -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Historial de Actividad (Últimos 7 días)</h5>
+                </div>
+                <div class="card-body">
+                    {% if historial %}
+                    <div class="table-responsive">
+                        <table class="table table-sm historial-table">
+                            <thead>
+                                <tr>
+                                    <th>Fecha/Hora</th>
+                                    <th>Acción</th>
+                                    <th>Descripción</th>
+                                    <th>IP</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for registro in historial %}
+                                <tr>
+                                    <td>
+                                        <small>{{ registro.fecha_accion|date:"d/m H:i" }}</small>
+                                    </td>
+                                    <td>
+                                        <span class="historial-badge 
+                                            {% if registro.tipo_accion == 'LOGIN' %}text-success
+                                            {% elif registro.tipo_accion == 'LOGOUT' %}text-secondary
+                                            {% elif registro.tipo_accion == 'VIEW' %}text-info
+                                            {% elif registro.tipo_accion == 'CREATE' %}text-primary
+                                            {% elif registro.tipo_accion == 'UPDATE' %}text-warning
+                                            {% elif registro.tipo_accion == 'DELETE' %}text-danger
+                                            {% else %}text-secondary{% endif %}">
+                                            {{ registro.get_tipo_accion_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <small>{{ registro.descripcion|truncatechars:40 }}</small>
+                                    </td>
+                                    <td>
+                                        <code>{{ registro.ip_address }}</code>
+                                    </td>
+                                    <td>
+                                        {% if registro.exitoso %}
+                                        <i class="fas fa-check text-success"></i>
+                                        {% else %}
+                                        <i class="fas fa-times text-danger"></i>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-3">
+                        <i class="fas fa-history fa-2x text-muted mb-2"></i>
+                        <p class="text-muted">No hay actividad registrada en los últimos 7 días.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+</div>
+
+<style>
+.badge {
+    font-size: 0.75em;
+}
+
+code {
+    font-size: 0.8em;
+    background-color: #f8f9fa;
+    padding: 2px 4px;
+    border-radius: 3px;
+}
+
+.list-unstyled li {
+    margin-bottom: 5px;
+}
+</style>
+{% endblock %}

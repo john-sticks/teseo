@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">Gestión de Usuarios</div>
+    <div class="card-body">
+        <a href="{% url 'dashboard:usuario_create' %}" class="btn btn-primary">Crear Nuevo Usuario</a>
+        <table class="table table-striped mt-3">
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Superuser</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for usuario in usuarios %}
+                <tr>
+                    <td>{{ usuario.username }}</td>
+                    <td>{{ usuario.email }}</td>
+                    <td>{% if usuario.is_superuser %}Sí{% else %}No{% endif %}</td>
+                    <td>
+                        <a href="{% url 'dashboard:usuario_edit' usuario.pk %}" class="btn btn-sm btn-info">Editar</a>
+                        <a href="{% url 'dashboard:usuario_delete' usuario.pk %}" class="btn btn-sm btn-danger">Eliminar</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

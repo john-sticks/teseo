@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block title %}Abriendo Operacionales - Sistema REF{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header text-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-file-pdf text-danger"></i> 
+                        Abriendo Documento Operacional
+                    </h5>
+                </div>
+                <div class="card-body text-center">
+                    <div class="mb-4">
+                        <i class="fas fa-spinner fa-spin fa-3x text-primary" style="color: #064669 !important;"></i>
+                    </div>
+                    
+                    <h6 class="mb-3">Torneo: <strong>{{ filtros.torneo_selected }}</strong></h6>
+                    <p class="text-muted mb-4">Abriendo el documento operacional en una nueva pestaña...</p>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        Si el documento no se abre automáticamente, 
+                        <a href="{{ pdf_url }}" target="_blank" class="alert-link">haz clic aquí</a>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <a href="{% url 'dashboard:dashboard' %}?torneo={{ filtros.torneo_selected }}" 
+                           class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Volver al Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Abrir el PDF en una nueva pestaña automáticamente
+window.onload = function() {
+    // Abrir el PDF en una nueva pestaña
+    window.open('{{ pdf_url }}', '_blank');
+    
+    // Opcional: Redirigir de vuelta al dashboard después de 3 segundos
+    setTimeout(function() {
+        window.location.href = "{% url 'dashboard:dashboard' %}?torneo={{ filtros.torneo_selected }}";
+    }, 3000);
+};
+</script>
+{% endblock %}

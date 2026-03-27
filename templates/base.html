@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Sistema REF - Riesgo en Encuentro Futbolístico{% endblock %}</title>
+    
+    <!-- Favicon -->
+    {% load static %}
+    <link rel="icon" type="image/x-icon" href="{% static 'images/favicon.png' %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'images/REF-Logo.png' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'images/REF-Logo.png' %}">
+    <link rel="apple-touch-icon" href="{% static 'images/REF-Logo.png' %}">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700;800&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Leaflet CSS para mapas -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <!-- Custom CSS -->
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/custom.css' %}">
+    <link rel="stylesheet" href="{% static 'css/components.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="app-container">
+        <!-- Mobile Header (visible only on mobile/tablet) -->
+        <div class="mobile-header d-xl-none">
+            <div class="mobile-logo">
+                <a href="{% url 'dashboard:welcome' %}" class="mobile-logo-link">
+                    <img src="{% static 'images/REF-Logo.png' %}" alt="REF Logo" class="mobile-logo-img">
+                </a>
+            </div>
+            <button class="mobile-menu-toggle" id="mobile-menu-toggle">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+
+        <!-- Mobile Menu Overlay -->
+        <div class="mobile-menu-overlay" id="mobile-menu-overlay"></div>
+        
+        <!-- Mobile Menu -->
+        <div class="mobile-menu" id="mobile-menu">
+            <div class="mobile-menu-header">
+                <a href="{% url 'dashboard:mi_perfil' %}" class="mobile-user-info-clickable">
+                    <div class="mobile-user-info">
+                        <i class="fas fa-user"></i>
+                        <span>{{ user.username }}</span>
+                    </div>
+                </a>
+                <button class="mobile-menu-close" id="mobile-menu-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="mobile-menu-content">
+                
+                <!-- Tournament Menu -->
+                <div class="mobile-tournament-section">
+                    <h6 class="mobile-section-title">Torneos</h6>
+                    
+                    <!-- LPF -->
+                    <div class="mobile-tournament-item">
+                        <button class="mobile-tournament-toggle" data-tournament="LPF">
+                            <span>LPF</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="mobile-tournament-submenu">
+                            <a href="#" onclick="navigateWithTournament('{% url 'dashboard:dashboard' %}')" class="mobile-submenu-item">
+                                <i class="fas fa-home"></i>
+                                <span>Dashboard</span>
+                            </a>
+                            <a href="#" onclick="navigateWithTournament('{% url 'dashboard:clubes' %}')" class="mobile-submenu-item">
+                                <i class="fas fa-users"></i>
+                                <span>Clubes</span>
+                            </a>
+                            <a href="#" onclick="navigateWithTournament('{% url 'dashboard:derecho_admision' %}')" class="mobile-submenu-item">
+                                <i class="fas fa-wrench"></i>
+                                <span>Derecho de admisión</span>
+                            </a>
+                            <a href="#" onclick="navigateWithTournament('{% url 'dashboard:redes_monitoring' %}')" class="mobile-submenu-item">
+                                <i class="fas fa-network-wired"></i>
+                                <span>Redes y navegadores</span>
+                            </a>
+                            <a href="#" onclick="navigateWithTournament('{% url 'dashboard:operacionales' %}')" class="mobile-submenu-item">
+                                <i class="fas fa-file-alt"></i>
+                                <span>Operacionales vigentes</span>
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- ASCENSO -->
+                    <div class="mobile-tournament-item">
+                        <button class="mobile-tournament-toggle" data-tournament="ASCENSO">
+                            <span>ASCENSO</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="mobile-tournament-submenu">
+                            <a href="#" onclick="navigateWithTournament('{% url 'dashboard:dashboard' %}')" class="mobile-submenu-item">
+                                <i class="fas fa-home"></i>
+                                <span>Dashboard</span>
+                            </a>
+                            <a href="#" onclick="navigateWithTournament('{% url 'dashboard:clubes' %}')" class="mobile-submenu-item">
+                                <i class="fas fa-users"></i>
+                                <span>Clubes</span>
+                            </a>
+                            <a href="#" onclick="navigateWithTournament('{% url 'dashboard:derecho_admision' %}')" class="mobile-submenu-item">
+                                <i class="fas fa-wrench"></i>
+                                <span>Derecho de admisión</span>
+                            </a>
+                            <a href="#" onclick="navigateWithTournament('{% url 'dashboard:redes_monitoring' %}')" class="mobile-submenu-item">
+                                <i class="fas fa-network-wired"></i>
+                                <span>Redes y navegadores</span>
+                            </a>
+                            <a href="#" onclick="navigateWithTournament('{% url 'dashboard:operacionales' %}')" class="mobile-submenu-item">
+                                <i class="fas fa-file-alt"></i>
+                                <span>Operacionales vigentes</span>
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- COPA ARGENTINA -->
+                    <div class="mobile-tournament-item">
+                        <button class="mobile-tournament-toggle" data-tournament="COPA ARGENTINA">
+                            <span>COPA ARGENTINA</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="mobile-tournament-submenu">
+                            <a href="#" onclick="navigateWithTournament('{% url 'dashboard:dashboard' %}')" class="mobile-submenu-item">
+                                <i class="fas fa-home"></i>
+                                <span>Dashboard</span>
+                            </a>
+                            <a href="#" onclick="navigateWithTournament('{% url 'dashboard:clubes' %}')" class="mobile-submenu-item">
+                                <i class="fas fa-users"></i>
+                                <span>Clubes</span>
+                            </a>
+                            <a href="#" onclick="navigateWithTournament('{% url 'dashboard:derecho_admision' %}')" class="mobile-submenu-item">
+                                <i class="fas fa-wrench"></i>
+                                <span>Derecho de admisión</span>
+                            </a>
+                            <a href="#" onclick="navigateWithTournament('{% url 'dashboard:redes_monitoring' %}')" class="mobile-submenu-item">
+                                <i class="fas fa-network-wired"></i>
+                                <span>Redes y navegadores</span>
+                            </a>
+                            <a href="#" onclick="navigateWithTournament('{% url 'dashboard:operacionales' %}')" class="mobile-submenu-item">
+                                <i class="fas fa-file-alt"></i>
+                                <span>Operacionales vigentes</span>
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- COPA LIBERTADORES -->
+                    <div class="mobile-tournament-item">
+                        <button class="mobile-tournament-toggle" data-tournament="COPA LIBERTADORES">
+                            <span>COPA LIBERTADORES</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="mobile-tournament-submenu">
+                            <a href="#" onclick="navigateWithTournament('{% url 'dashboard:dashboard' %}')" class="mobile-submenu-item">
+                                <i class="fas fa-home"></i>
+                                <span>Dashboard</span>
+                            </a>
+                            <a href="#" onclick="navigateWithTournament('{% url 'dashboard:clubes' %}')" class="mobile-submenu-item">
+                                <i class="fas fa-users"></i>
+                                <span>Clubes</span>
+                            </a>
+                            <a href="#" onclick="navigateWithTournament('{% url 'dashboard:derecho_admision' %}')" class="mobile-submenu-item">
+                                <i class="fas fa-wrench"></i>
+                                <span>Derecho de admisión</span>
+                            </a>
+                            <a href="#" onclick="navigateWithTournament('{% url 'dashboard:redes_monitoring' %}')" class="mobile-submenu-item">
+                                <i class="fas fa-network-wired"></i>
+                                <span>Redes y navegadores</span>
+                            </a>
+                            <a href="#" onclick="navigateWithTournament('{% url 'dashboard:operacionales' %}')" class="mobile-submenu-item">
+                                <i class="fas fa-file-alt"></i>
+                                <span>Operacionales vigentes</span>
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- COPA SUDAMERICA -->
+                    <div class="mobile-tournament-item">
+                        <button class="mobile-tournament-toggle" data-tournament="COPA SUDAMERICA">
+                            <span>COPA SUDAMERICANA</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="mobile-tournament-submenu">
+                            <a href="#" onclick="navigateWithTournament('{% url 'dashboard:dashboard' %}')" class="mobile-submenu-item">
+                                <i class="fas fa-home"></i>
+                                <span>Dashboard</span>
+                            </a>
+                            <a href="#" onclick="navigateWithTournament('{% url 'dashboard:clubes' %}')" class="mobile-submenu-item">
+                                <i class="fas fa-users"></i>
+                                <span>Clubes</span>
+                            </a>
+                            <a href="#" onclick="navigateWithTournament('{% url 'dashboard:derecho_admision' %}')" class="mobile-submenu-item">
+                                <i class="fas fa-wrench"></i>
+                                <span>Derecho de admisión</span>
+                            </a>
+                            <a href="#" onclick="navigateWithTournament('{% url 'dashboard:redes_monitoring' %}')" class="mobile-submenu-item">
+                                <i class="fas fa-network-wired"></i>
+                                <span>Redes y navegadores</span>
+                            </a>
+                            <a href="#" onclick="navigateWithTournament('{% url 'dashboard:operacionales' %}')" class="mobile-submenu-item">
+                                <i class="fas fa-file-alt"></i>
+                                <span>Operacionales vigentes</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Admin Section -->
+                {% if user.perfil.rol == 'ADMINISTRADOR' or user.is_superuser %}
+                <div class="mobile-admin-section">
+                    <h6 class="mobile-section-title">Administración</h6>
+                    <a href="{% url 'dashboard:gestion_usuarios' %}" class="mobile-menu-item">
+                        <i class="fas fa-users-cog"></i>
+                        <span>Roles</span>
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Mobile Menu Footer (Logout) -->
+            <div class="mobile-menu-footer">
+                <a href="{% url 'logout' %}" class="mobile-menu-item mobile-logout">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Cerrar sesión</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Sidebar (visible only on desktop) -->
+        <div class="sidebar d-none d-xl-block">
+            <div class="sidebar-header">
+                <a href="{% url 'dashboard:welcome' %}" class="logo-container">
+                    <img src="{% static 'images/REF-Logo.png' %}" alt="REF Logo" class="sidebar-logo">
+                </a>
+            </div>
+
+            <div class="sidebar-content">
+                <div class="user-section">
+                    <a href="{% url 'dashboard:mi_perfil' %}" class="user-info-clickable">
+                        <div class="user-info">
+                            <i class="fas fa-user"></i>
+                            <span>{{ user.username }}</span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <div class="sidebar-footer">
+                {% if user.perfil.rol == 'ADMINISTRADOR' or user.is_superuser %}
+                <a href="{% url 'dashboard:gestion_usuarios' %}" class="nav-item">
+                    <i class="fas fa-users-cog"></i>
+                    <span>Roles</span>
+                </a>
+                {% endif %}
+                <a href="{% url 'logout' %}" class="nav-item">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Cerrar sesión</span>
+                </a>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Tournament Filters / Welcome Title (visible only on desktop) -->
+            <div class="tournament-filters d-none d-xl-flex" id="tournament-filters">
+                <a href="#" onclick="changeTournament('LPF')" class="tournament-btn">LPF</a>
+                <a href="#" onclick="changeTournament('ASCENSO')" class="tournament-btn">ASCENSO</a>
+                <a href="#" onclick="changeTournament('COPA ARGENTINA')" class="tournament-btn">COPA ARGENTINA</a>
+                <a href="#" onclick="changeTournament('COPA LIBERTADORES')" class="tournament-btn">COPA LIBERTADORES</a>
+                <a href="#" onclick="changeTournament('COPA SUDAMERICA')" class="tournament-btn">COPA SUDAMERICANA</a>
+            </div>
+            
+            <!-- Welcome Title (hidden by default) -->
+            <div class="welcome-title-bar" id="welcome-title-bar" style="display: none;">
+                <h1 class="welcome-title-text">¡Bienvenidos!</h1>
+            </div>
+            
+            <!-- Main Navigation (visible only on desktop) -->
+            <div class="main-navbar d-none d-xl-flex">
+                <a href="#" onclick="navigateWithTournament('{% url 'dashboard:dashboard' %}')" class="nav-link active">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+                <a href="#" onclick="navigateWithTournament('{% url 'dashboard:clubes' %}')" class="nav-link">
+                    <i class="fas fa-users"></i> Clubes
+                </a>
+                <a href="#" onclick="navigateWithTournament('{% url 'dashboard:derecho_admision' %}')" class="nav-link">
+                    <i class="fas fa-wrench"></i> Derecho de admisión
+                </a>
+                <a href="#" onclick="navigateWithTournament('{% url 'dashboard:redes_monitoring' %}')" class="nav-link">
+                    <i class="fas fa-network-wired"></i> Redes y navegadores
+                </a>
+                <a href="#" onclick="navigateWithTournament('{% url 'dashboard:operacionales' %}')" class="nav-link">
+                    <i class="fas fa-file-alt"></i> Operacionales vigentes
+                </a>
+            </div>
+            
+    <!-- Content Wrapper -->
+    <div class="content-wrapper" id="content-wrapper" style="position: relative;">
+        <!-- Loading overlay -->
+        <div id="loading-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.8); z-index: 9998; opacity: 0; transition: opacity 0.3s ease; pointer-events: none;"></div>
+        
+        <!-- Loading indicator -->
+        <div id="loading-indicator" style="position: fixed; top: 50vh; z-index: 9999; opacity: 0; transition: opacity 0.3s ease;">
+            <div class="spinner-border text-primary" role="status" style="color: #064669 !important;">
+                <span class="visually-hidden">Cargando...</span>
+            </div>
+        </div>
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show mt-3" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+        
+        {% block content %}{% endblock %}
+    </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Leaflet JS para mapas -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Chart.js para gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <script>
+        // Variables globales para el sistema de menús
+        let currentTournament = null;
+        let isMenuOpen = false;
+        
+        // Función para aplicar filtros
+        function aplicarFiltros() {
+            const torneo = document.getElementById('torneo-filter').value;
+            const fechaDesde = document.getElementById('fecha-desde').value;
+            const fechaHasta = document.getElementById('fecha-hasta').value;
+            const riesgo = document.getElementById('riesgo-filter').value;
+            
+            const params = new URLSearchParams();
+            if (torneo) params.append('torneo', torneo);
+            if (fechaDesde) params.append('fecha_desde', fechaDesde);
+            if (fechaHasta) params.append('fecha_hasta', fechaHasta);
+            if (riesgo) params.append('nivel_riesgo', riesgo);
+            
+            window.location.href = window.location.pathname + '?' + params.toString();
+        }
+        
+        // Función para exportar datos
+        function exportarDatos(tipo) {
+            const torneo = document.getElementById('torneo-filter').value || 'LPF';
+            const url = `{% url 'dashboard:exportar_datos' %}?torneo=${torneo}&tipo=${tipo}`;
+            
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Crear y descargar CSV
+                        const csv = convertirAJSON(data.data);
+                        descargarCSV(csv, `${tipo}_${torneo}_${new Date().toISOString().split('T')[0]}.csv`);
+                    } else {
+                        alert('Error al exportar datos');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error al exportar datos');
+                });
+        }
+        
+        function convertirAJSON(data) {
+            if (!data || data.length === 0) return '';
+            
+            const headers = Object.keys(data[0]);
+            const csvContent = [
+                headers.join(','),
+                ...data.map(row => headers.map(header => `"${row[header] || ''}"`).join(','))
+            ].join('\n');
+            
+            return csvContent;
+        }
+        
+        function descargarCSV(csv, filename) {
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', filename);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        
+        // Función para sincronizar con Google Sheets
+        function sincronizarSheets() {
+            const torneo = document.getElementById('torneo-filter').value || 'LPF';
+            const url = `{% url 'dashboard:sincronizar_sheets' %}?torneo=${torneo}&tabla=all`;
+            
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json',
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Datos sincronizados correctamente');
+                        location.reload();
+                    } else {
+                        alert('Error al sincronizar: ' + (data.error || data.message || 'Error desconocido'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error al sincronizar datos');
+                });
+        }
+        
+        // Función para navegar manteniendo el parámetro de torneo
+        function navigateWithTournament(baseUrl, tournament = null) {
+            // Mostrar spinner antes de navegar
+            showLoadingSpinner();
+            
+            // Pequeño delay para asegurar que el spinner se vea
+            setTimeout(() => {
+                let torneo;
+                if (tournament) {
+                    // Si se proporciona un torneo específico, usarlo
+                    torneo = tournament;
+                } else {
+                    // Si no, usar el torneo de la URL actual o LPF por defecto
+                    const urlParams = new URLSearchParams(window.location.search);
+                    torneo = urlParams.get('torneo') || 'LPF';
+                }
+                window.location.href = baseUrl + '?torneo=' + encodeURIComponent(torneo);
+            }, 100);
+        }
+        
+        // Función para actualizar el estado activo del menú de navegación
+        function updateActiveNavLink() {
+            const currentPath = window.location.pathname;
+            const navLinks = document.querySelectorAll('.main-navbar .nav-link');
+            
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                
+                // Verificar si el enlace corresponde a la página actual
+                const href = link.getAttribute('onclick');
+                if (href) {
+                    // Extraer la URL del onclick
+                    const urlMatch = href.match(/navigateWithTournament\('([^']+)'\)/);
+                    if (urlMatch) {
+                        const linkUrl = urlMatch[1];
+                        // Comparar con la ruta actual (sin parámetros)
+                        if (currentPath === linkUrl || currentPath.startsWith(linkUrl)) {
+                            link.classList.add('active');
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Función para cambiar torneo y manejar menús
+        function changeTournament(torneo) {
+            // Si es el mismo torneo y el menú está abierto, cerrarlo y volver a bienvenida
+            if (currentTournament === torneo && isMenuOpen) {
+                showLoadingSpinner();
+                closeMenu();
+                setTimeout(() => {
+                    window.location.href = '{% url "dashboard:welcome" %}';
+                }, 100);
+                return;
+            }
+            
+            // Si es un torneo diferente o el menú está cerrado, abrirlo
+            currentTournament = torneo;
+            isMenuOpen = true;
+            
+            // Actualizar selección visual
+            updateTournamentSelection(torneo);
+            
+            // Mostrar menú de navegación
+            showNavigationMenu();
+            
+            // Navegar al dashboard del torneo seleccionado
+            showLoadingSpinner();
+            setTimeout(() => {
+                const dashboardUrl = '{% url "dashboard:dashboard" %}?torneo=' + encodeURIComponent(torneo);
+                window.location.href = dashboardUrl;
+            }, 100);
+        }
+        
+        // Función para mostrar el menú de navegación
+        function showNavigationMenu() {
+            const mainNavbar = document.querySelector('.main-navbar');
+            if (mainNavbar) {
+                mainNavbar.style.display = 'flex';
+            }
+        }
+        
+        // Función para cerrar el menú
+        function closeMenu() {
+            currentTournament = null;
+            isMenuOpen = false;
+            
+            const mainNavbar = document.querySelector('.main-navbar');
+            if (mainNavbar) {
+                mainNavbar.style.display = 'none';
+            }
+            
+            // Limpiar selección de torneos
+            document.querySelectorAll('.tournament-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+        }
+        
+        // Función para actualizar el torneo seleccionado
+        function updateTournamentSelection(selectedTorneo) {
+            // Actualizar todos los botones de torneo
+            document.querySelectorAll('.tournament-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.textContent.trim() === selectedTorneo) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+        
+        // Función para verificar si estamos en la página de bienvenida
+        function isWelcomePage() {
+            return window.location.pathname === '/' || window.location.pathname === '{% url "dashboard:welcome" %}';
+        }
+        
+        // Función para verificar si estamos en páginas que no deben mostrar submenú ni título
+        function isSpecialPage() {
+            const specialPages = [
+                '{% url "dashboard:mi_perfil" %}',
+                '{% url "dashboard:gestion_usuarios" %}'
+            ];
+            return specialPages.includes(window.location.pathname);
+        }
+        
+        // Función para posicionar el spinner en el centro del área de contenido
+        function positionSpinner() {
+            const loadingIndicator = document.getElementById('loading-indicator');
+            const contentWrapper = document.getElementById('content-wrapper');
+            
+            if (loadingIndicator && contentWrapper) {
+                const contentRect = contentWrapper.getBoundingClientRect();
+                const centerX = contentRect.left + (contentRect.width / 2);
+                loadingIndicator.style.left = centerX + 'px';
+                loadingIndicator.style.transform = 'translate(-50%, -50%)';
+            }
+        }
+        
+        // Función para mostrar el spinner de carga
+        function showLoadingSpinner() {
+            const loadingIndicator = document.getElementById('loading-indicator');
+            const loadingOverlay = document.getElementById('loading-overlay');
+            
+            // Posicionar el spinner correctamente
+            positionSpinner();
+            
+            if (loadingIndicator) {
+                loadingIndicator.style.opacity = '1';
+            }
+            
+            if (loadingOverlay) {
+                loadingOverlay.style.opacity = '1';
+            }
+        }
+        
+        // Función para ocultar el spinner y mostrar el contenido
+        function hideLoadingSpinner() {
+            const loadingIndicator = document.getElementById('loading-indicator');
+            const loadingOverlay = document.getElementById('loading-overlay');
+            
+            if (loadingIndicator) {
+                loadingIndicator.style.opacity = '0';
+            }
+            
+            if (loadingOverlay) {
+                loadingOverlay.style.opacity = '0';
+            }
+        }
+        
+        // Cargar valores actuales de filtros
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            // Si estamos en la página de bienvenida, mostrar título y ocultar menú de navegación
+            if (isWelcomePage()) {
+                const welcomeTitleBar = document.getElementById('welcome-title-bar');
+                const mainNavbar = document.querySelector('.main-navbar');
+                
+                if (welcomeTitleBar) welcomeTitleBar.style.display = 'flex';
+                if (mainNavbar) mainNavbar.style.display = 'none';
+                
+                closeMenu();
+            } else if (isSpecialPage()) {
+                // Si estamos en páginas especiales (perfil, auditoría, gestión), ocultar todo
+                const welcomeTitleBar = document.getElementById('welcome-title-bar');
+                const mainNavbar = document.querySelector('.main-navbar');
+                
+                if (welcomeTitleBar) welcomeTitleBar.style.display = 'none';
+                if (mainNavbar) mainNavbar.style.display = 'none';
+                
+                closeMenu();
+            } else {
+                // Si no estamos en bienvenida ni en páginas especiales, ocultar título y mostrar menú de navegación
+                const welcomeTitleBar = document.getElementById('welcome-title-bar');
+                const mainNavbar = document.querySelector('.main-navbar');
+                
+                if (welcomeTitleBar) welcomeTitleBar.style.display = 'none';
+                if (mainNavbar) mainNavbar.style.display = 'flex';
+                
+                isMenuOpen = true;
+                
+                // Actualizar el estado activo del menú de navegación
+                updateActiveNavLink();
+            }
+            
+            // Actualizar selección de torneo
+            const torneo = urlParams.get('torneo') || 'LPF';
+            if (torneo && !isWelcomePage() && !isSpecialPage()) {
+                currentTournament = torneo;
+                updateTournamentSelection(torneo);
+            }
+            
+            if (urlParams.get('fecha_desde')) {
+                const fechaDesdeEl = document.getElementById('fecha-desde');
+                if (fechaDesdeEl) fechaDesdeEl.value = urlParams.get('fecha_desde');
+            }
+            if (urlParams.get('fecha_hasta')) {
+                const fechaHastaEl = document.getElementById('fecha-hasta');
+                if (fechaHastaEl) fechaHastaEl.value = urlParams.get('fecha_hasta');
+            }
+            if (urlParams.get('nivel_riesgo')) {
+                const riesgoEl = document.getElementById('riesgo-filter');
+                if (riesgoEl) riesgoEl.value = urlParams.get('nivel_riesgo');
+            }
+            
+            // Ocultar el spinner una vez que todo esté configurado
+            hideLoadingSpinner();
+        });
+        
+        // Reposicionar el spinner cuando se redimensiona la ventana
+        window.addEventListener('resize', function() {
+            const loadingIndicator = document.getElementById('loading-indicator');
+            if (loadingIndicator && loadingIndicator.style.opacity === '1') {
+                positionSpinner();
+            }
+        });
+        
+        // Mobile menu functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+            const mobileMenu = document.getElementById('mobile-menu');
+            const mobileMenuOverlay = document.getElementById('mobile-menu-overlay');
+            const mobileMenuClose = document.getElementById('mobile-menu-close');
+            const tournamentToggles = document.querySelectorAll('.mobile-tournament-toggle');
+            
+            // Toggle mobile menu
+            function toggleMobileMenu() {
+                mobileMenu.classList.toggle('active');
+                mobileMenuOverlay.classList.toggle('active');
+                document.body.classList.toggle('mobile-menu-open');
+            }
+            
+            // Close mobile menu
+            function closeMobileMenu() {
+                mobileMenu.classList.remove('active');
+                mobileMenuOverlay.classList.remove('active');
+                document.body.classList.remove('mobile-menu-open');
+            }
+            
+            // Event listeners
+            if (mobileMenuToggle) {
+                mobileMenuToggle.addEventListener('click', toggleMobileMenu);
+            }
+            
+            if (mobileMenuClose) {
+                mobileMenuClose.addEventListener('click', closeMobileMenu);
+            }
+            
+            if (mobileMenuOverlay) {
+                mobileMenuOverlay.addEventListener('click', closeMobileMenu);
+            }
+            
+            // Tournament submenu toggles
+            tournamentToggles.forEach(toggle => {
+                toggle.addEventListener('click', function() {
+                    const tournament = this.getAttribute('data-tournament');
+                    const submenu = this.nextElementSibling;
+                    const chevron = this.querySelector('.fa-chevron-down');
+                    
+                    // Close other submenus
+                    tournamentToggles.forEach(otherToggle => {
+                        if (otherToggle !== this) {
+                            const otherSubmenu = otherToggle.nextElementSibling;
+                            const otherChevron = otherToggle.querySelector('.fa-chevron-down');
+                            otherSubmenu.classList.remove('active');
+                            otherChevron.style.transform = 'rotate(0deg)';
+                        }
+                    });
+                    
+                    // Toggle current submenu
+                    submenu.classList.toggle('active');
+                    chevron.style.transform = submenu.classList.contains('active') ? 'rotate(180deg)' : 'rotate(0deg)';
+                });
+            });
+            
+            // Handle mobile submenu navigation with tournament parameter
+            document.querySelectorAll('.mobile-submenu-item').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const onclick = this.getAttribute('onclick');
+                    if (onclick) {
+                        // Extract the tournament from the parent button
+                        const tournamentItem = this.closest('.mobile-tournament-item');
+                        const tournamentToggle = tournamentItem.querySelector('.mobile-tournament-toggle');
+                        const tournament = tournamentToggle.getAttribute('data-tournament');
+                        
+                        // Close mobile menu
+                        closeMobileMenu();
+                        
+                        // Navigate with tournament parameter using the updated function
+                        const urlMatch = onclick.match(/navigateWithTournament\('([^']+)'\)/);
+                        if (urlMatch) {
+                            const baseUrl = urlMatch[1];
+                            navigateWithTournament(baseUrl, tournament);
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

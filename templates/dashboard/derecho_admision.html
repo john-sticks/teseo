@@ -1,0 +1,217 @@
+{% extends 'base.html' %}
+
+{% block title %}Derecho de Admisión - Sistema REF{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Contenido Principal -->
+    <div class="row">
+        <div class="col-12">
+            <div class="dashboard-card no-header-bg">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Derecho de Admisión</h5>
+                    <div class="btn-group" role="group">
+                        <button class="btn btn-success btn-sm" onclick="sincronizarTabla('derecho_admision')" id="syncDerecho_admisionBtn">
+                            <i class="fas fa-sync-alt"></i> Sincronizar
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Barra de búsqueda -->
+                    <div class="search-container">
+                        <form method="get" id="derechos-search-form">
+                            <input type="hidden" name="torneo" value="{{ filtros.torneo_selected }}">
+                            <div class="search-bar">
+                                <input type="text" class="search-input" name="busqueda" 
+                                       value="{{ filtros.busqueda }}" 
+                                       placeholder="Buscar por nombre, apellido, club, motivo o estado..."
+                                       onkeypress="if(event.key==='Enter'){document.getElementById('derechos-search-form').submit();}">
+                                <i class="fas fa-search"></i>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <!-- Resultados de búsqueda -->
+                    {% if filtros.busqueda %}
+                    <div class="alert alert-info mb-3">
+                        <i class="fas fa-info-circle"></i>
+                        Mostrando resultados para: <strong>"{{ filtros.busqueda }}"</strong>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="table-responsive dashboard-table">
+                        <table class="table">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th class="text-center">Club</th>
+                                    <th class="text-center">Escudo</th>
+                                    <th class="text-center">Nombre</th>
+                                    <th class="text-center">Apellido</th>
+                                    <th class="text-center">Estado</th>
+                                    <th class="text-center">Motivo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for derecho in derechos %}
+                                <tr>
+                                    <td class="text-center">{{ derecho.club }}</td>
+                                    <td class="text-center">
+                                        {% if derecho.escudo %}
+                                            <img src="{{ derecho.escudo }}" alt="{{ derecho.club }}" class="escudo-small">
+                                        {% else %}
+                                            <i class="fas fa-shield-alt text-muted"></i>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">{{ derecho.nombre|default:"-" }}</td>
+                                    <td class="text-center">{{ derecho.apellido|default:"-" }}</td>
+                                    <td class="text-center estado-cell 
+                                        {% if derecho.estado == 'VIGENTE' %}estado-vigente-fixed
+                                        {% elif derecho.estado == 'SUSPENDIDO' %}estado-suspendido-fixed
+                                        {% elif derecho.estado == 'ACTIVO' %}estado-vigente-fixed
+                                        {% elif 'vigente' in derecho.estado|lower %}estado-vigente-fixed
+                                        {% elif 'activo' in derecho.estado|lower %}estado-vigente-fixed
+                                        {% else %}estado-pendiente-fixed{% endif %}" 
+                                        title="Estado original: '{{ derecho.estado|default:"-" }}'">
+                                        {{ derecho.estado|default:"-" }}
+                                    </td>
+                                    <td class="text-center motivo-cell">{{ derecho.motivo|default:"-" }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted">No hay derechos de admisión registrados</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Paginación para derechos de admisión -->
+                    {% if derechos.has_other_pages %}
+                    <nav aria-label="Paginación de derechos de admisión" class="mt-3">
+                        <ul class="pagination justify-content-center">
+                            {% if derechos.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if request.GET.torneo %}torneo={{ request.GET.torneo }}&{% endif %}{% if request.GET.busqueda %}busqueda={{ request.GET.busqueda }}&{% endif %}derechos_page={{ derechos.previous_page_number }}">
+                                        <i class="fas fa-chevron-left"></i>
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link"><i class="fas fa-chevron-left"></i></span>
+                                </li>
+                            {% endif %}
+
+                            {% for num in derechos.paginator.page_range %}
+                                {% if derechos.number == num %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ num }}</span>
+                                    </li>
+                                {% elif num > derechos.number|add:'-3' and num < derechos.number|add:'3' %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?{% if request.GET.torneo %}torneo={{ request.GET.torneo }}&{% endif %}{% if request.GET.busqueda %}busqueda={{ request.GET.busqueda }}&{% endif %}derechos_page={{ num }}">{{ num }}</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if derechos.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if request.GET.torneo %}torneo={{ request.GET.torneo }}&{% endif %}{% if request.GET.busqueda %}busqueda={{ request.GET.busqueda }}&{% endif %}derechos_page={{ derechos.next_page_number }}">
+                                        <i class="fas fa-chevron-right"></i>
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link"><i class="fas fa-chevron-right"></i></span>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Función para sincronizar una tabla específica
+function sincronizarTabla(tabla) {
+    const btnId = `sync${tabla.charAt(0).toUpperCase() + tabla.slice(1)}Btn`;
+    const btn = document.getElementById(btnId);
+    const icon = btn.querySelector('i');
+    
+    btn.disabled = true;
+    icon.className = 'fas fa-spinner fa-spin';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sincronizando...';
+    
+    const url = '{% url "dashboard:sincronizar_sheets" %}?torneo={{ filtros.torneo_selected }}&tabla=' + tabla;
+    
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const resultado = data.resultado;
+            showAlert(`${tabla.charAt(0).toUpperCase() + tabla.slice(1)} actualizado correctamente.`, 'success');
+            location.reload(); // Recargar la página para mostrar los datos actualizados
+        } else {
+            showAlert(`Error sincronizando ${tabla}: ${data.message || data.error}`, 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error de red o servidor:', error);
+        showAlert('Error de conexión con el servidor.', 'danger');
+    })
+    .finally(() => {
+        btn.disabled = false;
+        icon.className = 'fas fa-sync-alt';
+        btn.innerHTML = '<i class="fas fa-sync-alt"></i> Sincronizar';
+    });
+}
+
+// Función para mostrar alertas
+function showAlert(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.parentNode.removeChild(alertDiv);
+        }
+    }, 5000);
+}
+</script>
+
+<style>
+.escudo-small {
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
+    border-radius: 4px;
+}
+
+.estado-cell {
+    font-weight: bold;
+    width: 15%;
+}
+
+.motivo-cell {
+    width: 35%;
+}
+
+/* Los colores de estado se manejan desde custom.css */
+</style>
+
+{% endblock %}

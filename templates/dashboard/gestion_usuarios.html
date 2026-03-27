@@ -1,0 +1,487 @@
+{% extends 'base.html' %}
+
+{% block title %}Gestión de Usuarios - Sistema REF{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="dashboard-content">
+        <!-- Filtros y Acciones -->
+        <div class="row mb-3">
+            <div class="col-12">
+                <div class="dashboard-card no-header-bg">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Usuarios y Roles</h5>
+                        <a href="{% url 'dashboard:crear_usuario' %}" class="btn btn-success btn-sm">
+                            <i class="fas fa-plus"></i> Crear Usuario
+                        </a>
+                    </div>
+                <div class="card-body p-0">
+                    <div class="usuarios-container">
+                        <!-- Filtros -->
+                        <div class="usuarios-filters">
+                            <form method="get">
+                                <!-- Filtros en la primera fila -->
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label for="busqueda" class="form-label">Buscar</label>
+                                        <input type="text" class="form-control" id="busqueda" name="busqueda" 
+                                               value="{{ busqueda }}" placeholder="Nombre, email, username...">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="rol" class="form-label">Rol</label>
+                                        <select class="form-select" id="rol" name="rol">
+                                            <option value="">Todos los roles</option>
+                                            <option value="ADMINISTRADOR" {% if rol_filtro == 'ADMINISTRADOR' %}selected{% endif %}>Administrador</option>
+                                            <option value="VISITA" {% if rol_filtro == 'VISITA' %}selected{% endif %}>Visita</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="estado" class="form-label">Estado</label>
+                                        <select class="form-select" id="estado" name="estado">
+                                            <option value="">Todos</option>
+                                            <option value="activo" {% if estado_filtro == 'activo' %}selected{% endif %}>Activo</option>
+                                            <option value="inactivo" {% if estado_filtro == 'inactivo' %}selected{% endif %}>Inactivo</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <!-- Botones en la segunda fila -->
+                                <div class="row g-3 mt-2">
+                                    <div class="col-12">
+                                        <div class="d-flex gap-2">
+                                            <button type="submit" class="btn btn-primary btn-sm">
+                                                <i class="fas fa-search"></i> Filtrar
+                                            </button>
+                                            <a href="{% url 'dashboard:gestion_usuarios' %}" class="btn btn-secondary btn-sm">
+                                                <i class="fas fa-times"></i> Limpiar
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Tabla de Usuarios -->
+                        <div class="usuarios-table-container">
+                            <div class="table-responsive">
+                                <table class="table table-sm usuarios-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Usuario</th>
+                                            <th>Nombre</th>
+                                            <th>Email</th>
+                                            <th>Rol</th>
+                                            <th>Estado</th>
+                                            <th>Última Actividad</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for usuario in usuarios %}
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2">
+                                                        {{ usuario.username|first|upper }}
+                                                    </div>
+                                                    <strong>{{ usuario.username }}</strong>
+                                                </div>
+                                            </td>
+                                            <td>{{ usuario.first_name }} {{ usuario.last_name }}</td>
+                                            <td>{{ usuario.email|default:"-" }}</td>
+                                            <td>
+                                                <span class="usuarios-badge 
+                                                    {% if usuario.perfil.rol == 'ADMINISTRADOR' %}text-warning
+                                                    {% else %}text-info{% endif %}">
+                                                    {{ usuario.perfil.get_rol_display }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="usuarios-badge 
+                                                    {% if usuario.is_active %}text-success
+                                                    {% else %}text-danger{% endif %}">
+                                                    {% if usuario.is_active %}Activo{% else %}Inactivo{% endif %}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                {% if usuario.perfil.ultima_actividad %}
+                                                    {{ usuario.perfil.ultima_actividad|date:"d/m/Y H:i" }}
+                                                {% else %}
+                                                    -
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <div class="btn-group" role="group">
+                                                    <a href="{% url 'dashboard:editar_usuario' usuario.id %}" 
+                                                       class="btn btn-sm btn-outline-primary">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    <a href="{% url 'dashboard:eliminar_usuario' usuario.id %}" 
+                                                       class="btn btn-sm btn-outline-danger"
+                                                       onclick="return confirm('¿Estás seguro de eliminar este usuario?')">
+                                                        <i class="fas fa-trash"></i>
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="7" class="text-center text-muted">No hay usuarios disponibles</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Paginación -->
+                            {% if usuarios.has_other_pages %}
+                            <div class="usuarios-pagination">
+                                <nav aria-label="Paginación de usuarios">
+                                    <ul class="pagination justify-content-center">
+                                        {% if usuarios.has_previous %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ usuarios.previous_page_number }}{% if busqueda %}&busqueda={{ busqueda }}{% endif %}{% if rol_filtro %}&rol={{ rol_filtro }}{% endif %}{% if estado_filtro %}&estado={{ estado_filtro }}{% endif %}">Anterior</a>
+                                        </li>
+                                        {% endif %}
+                                        
+                                        {% for num in usuarios.paginator.page_range %}
+                                        {% if usuarios.number == num %}
+                                        <li class="page-item active">
+                                            <span class="page-link">{{ num }}</span>
+                                        </li>
+                                        {% elif num > usuarios.number|add:'-3' and num < usuarios.number|add:'3' %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ num }}{% if busqueda %}&busqueda={{ busqueda }}{% endif %}{% if rol_filtro %}&rol={{ rol_filtro }}{% endif %}{% if estado_filtro %}&estado={{ estado_filtro }}{% endif %}">{{ num }}</a>
+                                        </li>
+                                        {% endif %}
+                                        {% endfor %}
+                                        
+                                        {% if usuarios.has_next %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ usuarios.next_page_number }}{% if busqueda %}&busqueda={{ busqueda }}{% endif %}{% if rol_filtro %}&rol={{ rol_filtro }}{% endif %}{% if estado_filtro %}&estado={{ estado_filtro }}{% endif %}">Siguiente</a>
+                                        </li>
+                                        {% endif %}
+                                    </ul>
+                                </nav>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Historial de inicios de sesión -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="dashboard-card no-header-bg">
+                    <div class="card-header">
+                        <h5 class="mb-0">Historial de inicios de sesión</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="auditoria-container">
+                            <!-- Filtros de Auditoría -->
+                            <div class="auditoria-filters">
+                                <form method="get" class="row g-3">
+                                    <div class="col-md-3">
+                                        <label for="dias" class="form-label">Período (días)</label>
+                                        <select class="form-select" id="dias" name="dias">
+                                            <option value="7" {% if dias == 7 %}selected{% endif %}>Últimos 7 días</option>
+                                            <option value="30" {% if dias == 30 %}selected{% endif %}>Últimos 30 días</option>
+                                            <option value="90" {% if dias == 90 %}selected{% endif %}>Últimos 90 días</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label for="tipo_accion" class="form-label">Tipo de Acción</label>
+                                        <select class="form-select" id="tipo_accion" name="tipo_accion">
+                                            <option value="">Todos los tipos</option>
+                                            {% for tipo, descripcion in tipos_accion %}
+                                            <option value="{{ tipo }}" {% if tipo_accion == tipo %}selected{% endif %}>{{ descripcion }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="usuario" class="form-label">Usuario</label>
+                                        <input type="text" class="form-control" id="usuario" name="usuario" 
+                                               value="{{ usuario_filtro }}" placeholder="Nombre de usuario...">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">&nbsp;</label>
+                                        <div class="d-flex gap-2">
+                                            <button type="submit" class="btn btn-primary btn-sm">
+                                                <i class="fas fa-search"></i> Filtrar
+                                            </button>
+                                            <a href="{% url 'dashboard:gestion_usuarios' %}" class="btn btn-secondary btn-sm">
+                                                <i class="fas fa-times"></i> Limpiar
+                                            </a>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+
+                            <!-- Tabla de Auditoría -->
+                            <div class="auditoria-table-container">
+                                <div class="table-responsive">
+                                    <table class="table table-sm auditoria-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Fecha/Hora</th>
+                                                <th>Usuario</th>
+                                                <th>Acción</th>
+                                                <th>Descripción</th>
+                                                <th>IP</th>
+                                                <th>Estado</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for registro in registros_auditoria %}
+                                            <tr>
+                                                <td>
+                                                    <small>{{ registro.fecha_accion|date:"d/m/Y" }}</small><br>
+                                                    <strong>{{ registro.fecha_accion|time:"H:i:s" }}</strong>
+                                                </td>
+                                                <td>
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2">
+                                                            {{ registro.usuario.username|first|upper }}
+                                                        </div>
+                                                        <div>
+                                                            <strong>{{ registro.usuario.username }}</strong><br>
+                                                            <small class="text-muted">{{ registro.usuario.get_full_name|default:"-" }}</small>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <span class="auditoria-badge 
+                                                        {% if registro.tipo_accion == 'LOGIN' %}text-success
+                                                        {% elif registro.tipo_accion == 'LOGOUT' %}text-secondary
+                                                        {% elif registro.tipo_accion == 'VIEW' %}text-info
+                                                        {% elif registro.tipo_accion == 'CREATE' %}text-primary
+                                                        {% elif registro.tipo_accion == 'UPDATE' %}text-warning
+                                                        {% elif registro.tipo_accion == 'DELETE' %}text-danger
+                                                        {% elif registro.tipo_accion == 'SYNC' %}text-success
+                                                        {% elif registro.tipo_accion == 'EXPORT' %}text-info
+                                                        {% else %}text-secondary{% endif %}">
+                                                        {{ registro.get_tipo_accion_display }}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <span title="{{ registro.descripcion }}">
+                                                        {{ registro.descripcion|truncatechars:50 }}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <code>{{ registro.ip_address }}</code>
+                                                </td>
+                                                <td>
+                                                    {% if registro.exitoso %}
+                                                    <span class="auditoria-badge text-success">
+                                                        <i class="fas fa-check"></i> Exitoso
+                                                    </span>
+                                                    {% else %}
+                                                    <span class="auditoria-badge text-danger">
+                                                        <i class="fas fa-times"></i> Fallido
+                                                    </span>
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                            {% empty %}
+                                            <tr>
+                                                <td colspan="6" class="text-center text-muted">No hay registros de auditoría disponibles</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <!-- Paginación de Auditoría -->
+                                {% if registros_auditoria.has_other_pages %}
+                                <div class="auditoria-pagination">
+                                    <nav aria-label="Paginación de auditoría">
+                                        <ul class="pagination justify-content-center">
+                                            {% if registros_auditoria.has_previous %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="?page={{ registros_auditoria.previous_page_number }}{% if dias %}&dias={{ dias }}{% endif %}{% if tipo_accion %}&tipo_accion={{ tipo_accion }}{% endif %}{% if usuario_filtro %}&usuario={{ usuario_filtro }}{% endif %}">Anterior</a>
+                                            </li>
+                                            {% endif %}
+                                            
+                                            {% for num in registros_auditoria.paginator.page_range %}
+                                            {% if registros_auditoria.number == num %}
+                                            <li class="page-item active">
+                                                <span class="page-link">{{ num }}</span>
+                                            </li>
+                                            {% elif num > registros_auditoria.number|add:'-3' and num < registros_auditoria.number|add:'3' %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="?page={{ num }}{% if dias %}&dias={{ dias }}{% endif %}{% if tipo_accion %}&tipo_accion={{ tipo_accion }}{% endif %}{% if usuario_filtro %}&usuario={{ usuario_filtro }}{% endif %}">{{ num }}</a>
+                                            </li>
+                                            {% endif %}
+                                            {% endfor %}
+                                            
+                                            {% if registros_auditoria.has_next %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="?page={{ registros_auditoria.next_page_number }}{% if dias %}&dias={{ dias }}{% endif %}{% if tipo_accion %}&tipo_accion={{ tipo_accion }}{% endif %}{% if usuario_filtro %}&usuario={{ usuario_filtro }}{% endif %}">Siguiente</a>
+                                            </li>
+                                            {% endif %}
+                                        </ul>
+                                    </nav>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.avatar-sm {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+/* Contenedores con fondo blanco y border-radius como Mi Perfil */
+.usuarios-container {
+    background-color: white;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-top: 2rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.usuarios-filters {
+    margin-bottom: 1.5rem;
+}
+
+.usuarios-table-container {
+    margin-bottom: 1rem;
+}
+
+.usuarios-pagination {
+    margin-top: 1rem;
+}
+
+.auditoria-container {
+    background-color: white;
+    border-radius: 0.375rem;
+    padding: 1.5rem;
+    margin-top: 2rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.auditoria-filters {
+    margin-bottom: 1.5rem;
+}
+
+.auditoria-table-container {
+    margin-bottom: 1rem;
+}
+
+.auditoria-pagination {
+    margin-top: 1rem;
+}
+
+/* Círculos de avatar con color personalizado */
+.avatar-sm.bg-primary {
+    background-color: #359CB2 !important;
+}
+
+/* Gap entre botones de acciones */
+.usuarios-table .btn-group {
+    gap: 0.5rem;
+}
+
+.usuarios-table .btn-group .btn {
+    margin-right: 0;
+}
+
+/* Estilos para tabla de usuarios minimalista */
+.usuarios-table {
+    border: none !important;
+    background-color: white !important;
+}
+
+.usuarios-table thead th {
+    background-color: white !important;
+    border: none !important;
+    border-bottom: 1px solid #e0e0e0 !important;
+    color: #333 !important;
+    font-weight: 600;
+    padding: 12px 8px;
+}
+
+.usuarios-table tbody td {
+    background-color: white !important;
+    border: none !important;
+    border-bottom: 1px solid #e0e0e0 !important;
+    padding: 12px 8px;
+    vertical-align: middle;
+}
+
+.usuarios-table tbody tr:last-child td {
+    border-bottom: none !important;
+}
+
+.usuarios-badge {
+    background: none !important;
+    border: none !important;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.usuarios-badge.text-info {
+    color: #3191A6 !important;
+}
+
+.usuarios-table tbody tr:hover td {
+    background-color: white !important;
+    border-bottom: 1px solid #e0e0e0 !important;
+}
+
+/* Estilos para tabla de auditoría minimalista */
+.auditoria-table {
+    border: none !important;
+    background-color: white !important;
+}
+
+.auditoria-table thead th {
+    background-color: white !important;
+    border: none !important;
+    border-bottom: 1px solid #e0e0e0 !important;
+    color: #333 !important;
+    font-weight: 600;
+    padding: 12px 8px;
+}
+
+.auditoria-table tbody td {
+    background-color: white !important;
+    border: none !important;
+    border-bottom: 1px solid #e0e0e0 !important;
+    padding: 12px 8px;
+    vertical-align: middle;
+}
+
+.auditoria-table tbody tr:last-child td {
+    border-bottom: none !important;
+}
+
+.auditoria-badge {
+    background: none !important;
+    border: none !important;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.auditoria-badge.text-info {
+    color: #3191A6 !important;
+}
+
+.auditoria-table tbody tr:hover td {
+    background-color: white !important;
+    border-bottom: 1px solid #e0e0e0 !important;
+}
+</style>
+{% endblock %}

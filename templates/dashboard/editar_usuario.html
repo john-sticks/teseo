@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+
+{% block title %}Editar Usuario - Sistema REF{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-user-edit"></i> Editar Usuario: {{ usuario.username }}</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="username" class="form-label">Nombre de Usuario</label>
+                                    <input type="text" class="form-control" id="username" name="username" 
+                                           value="{{ usuario.username }}" readonly>
+                                    <small class="text-muted">No se puede modificar el nombre de usuario</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="email" name="email" 
+                                           value="{{ usuario.email }}">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="first_name" class="form-label">Nombre</label>
+                                    <input type="text" class="form-control" id="first_name" name="first_name" 
+                                           value="{{ usuario.first_name }}">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="last_name" class="form-label">Apellido</label>
+                                    <input type="text" class="form-control" id="last_name" name="last_name" 
+                                           value="{{ usuario.last_name }}">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="nueva_password" class="form-label">Nueva Contraseña</label>
+                                    <input type="password" class="form-control" id="nueva_password" name="nueva_password">
+                                    <small class="text-muted">Dejar vacío para mantener la contraseña actual</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="rol" class="form-label">Rol</label>
+                                    <select class="form-select" id="rol" name="rol">
+                                        <option value="ADMINISTRADOR" {% if perfil.rol == 'ADMINISTRADOR' %}selected{% endif %}>Administrador</option>
+                                        <option value="VISITA" {% if perfil.rol == 'VISITA' %}selected{% endif %}>Visita</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="telefono" class="form-label">Teléfono</label>
+                                    <input type="text" class="form-control" id="telefono" name="telefono" 
+                                           value="{{ perfil.telefono }}">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="departamento" class="form-label">Departamento</label>
+                                    <input type="text" class="form-control" id="departamento" name="departamento" 
+                                           value="{{ perfil.departamento }}">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="cargo" class="form-label">Cargo</label>
+                                    <input type="text" class="form-control" id="cargo" name="cargo" 
+                                           value="{{ perfil.cargo }}">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="is_active" name="is_active" 
+                                               {% if usuario.is_active %}checked{% endif %}>
+                                        <label class="form-check-label" for="is_active">
+                                            Usuario Activo
+                                        </label>
+                                    </div>
+                                    <small class="text-muted">Los usuarios inactivos no pueden iniciar sesión</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <h6><i class="fas fa-info-circle"></i> Información sobre Roles</h6>
+                            <ul class="mb-0">
+                                <li><strong>Administrador:</strong> Acceso completo al sistema, puede ver todos los contenidos y gestionar usuarios</li>
+                                <li><strong>Visita:</strong> Acceso limitado, no puede ver "Relato del hecho" ni gestionar usuarios</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="alert alert-warning">
+                            <h6><i class="fas fa-exclamation-triangle"></i> Información del Usuario</h6>
+                            <ul class="mb-0">
+                                <li><strong>Fecha de Registro:</strong> {{ usuario.date_joined|date:"d/m/Y H:i" }}</li>
+                                <li><strong>Último Acceso:</strong> {{ usuario.last_login|date:"d/m/Y H:i"|default:"Nunca" }}</li>
+                                <li><strong>Estado:</strong> 
+                                    {% if usuario.is_active %}
+                                        <span class="badge bg-success">Activo</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Inactivo</span>
+                                    {% endif %}
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save"></i> Guardar Cambios
+                            </button>
+                            <a href="{% url 'dashboard:gestion_usuarios' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Volver
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,272 @@
+{% extends 'base.html' %}
+
+{% block title %}Redes y Navegadores - Sistema REF{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Controles de Fuente de Datos -->
+    <div class="row mb-2">
+        <div class="col-12">
+            <div class="dashboard-card no-header-bg">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Fuente de Datos RSS</h5>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-primary btn-sm" onclick="refreshRSSData()" id="refreshRSSBtn">
+                            <i class="fas fa-sync-alt"></i> Refrescar
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Fuente RSS:</strong> https://rss.app/feeds/_aUBB2qjedDT2RxdW
+                        <br><small>Monitoreo en tiempo real de redes sociales y medios</small>
+                        <br><small class="text-success">
+                            <i class="fas fa-check-circle"></i> 
+                            Sistema funcionando correctamente - {{ estadisticas.total_noticias }} noticias procesadas
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Noticias Recientes (Todas) -->
+    <div class="row">
+        <div class="col-12">
+            <div class="dashboard-card no-header-bg">
+                <div class="card-header">
+                    <h5 class="mb-0">Todas las Noticias Recientes</h5>
+                </div>
+                <div class="card-body">
+                    <div class="news-list">
+                        {% for noticia in noticias|slice:":20" %}
+                        <div class="news-item mb-3 p-3 border rounded border-light bg-light">
+                            
+                            <div class="row">
+                                <!-- Imagen de la noticia -->
+                                <div class="col-md-2">
+                                    {% if noticia.imagen %}
+                                    <img src="{{ noticia.imagen }}" alt="{{ noticia.titulo }}" 
+                                         class="img-fluid rounded news-image" 
+                                         style="width: 100%; height: 120px; object-fit: cover;">
+                                    {% else %}
+                                    <div class="news-placeholder d-flex align-items-center justify-content-center bg-light rounded" 
+                                         style="width: 100%; height: 120px;">
+                                        <i class="fas fa-image text-muted fa-2x"></i>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Contenido de la noticia -->
+                                <div class="col-md-10">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <div class="news-meta">
+                                            <span class="text-muted small">{{ noticia.fuente|upper }}</span>
+                                        </div>
+                                        <span class="text-muted small">{{ noticia.fecha_relativa }}</span>
+                                    </div>
+                                    
+                                    <h6 class="news-title mb-2 fw-bold">{{ noticia.titulo }}</h6>
+                                    
+                                    <p class="news-description text-muted small mb-2">
+                                        {{ noticia.descripcion|truncatechars:150 }}
+                                    </p>
+                                    
+                                    <!-- Keywords y clubes -->
+                                    <div class="news-tags mb-2">
+                                        {% if noticia.keywords_detectadas %}
+                                        {% for keyword in noticia.keywords_detectadas|slice:":3" %}
+                                        <span class="badge bg-primary me-1 small">{{ keyword }}</span>
+                                        {% endfor %}
+                                        {% endif %}
+                                        
+                                        {% if noticia.clubes_mencionados %}
+                                        {% for club in noticia.clubes_mencionados|slice:":3" %}
+                                        <span class="badge bg-success me-1 small">{{ club }}</span>
+                                        {% endfor %}
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <small class="text-muted">{{ noticia.fecha }}</small>
+                                        <a href="{{ noticia.url }}" target="_blank" 
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-external-link-alt"></i> Ver
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i>
+                                No hay noticias disponibles en este momento.
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+.badge {
+    font-size: 0.75em;
+}
+
+/* Estilos específicos para noticias */
+.news-list {
+    max-height: 800px;
+    overflow-y: auto;
+}
+
+.news-item {
+    transition: all 0.3s ease;
+    border-left: 4px solid transparent !important;
+}
+
+.news-item:hover {
+    transform: translateX(5px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.news-item.border-danger {
+    border-left-color: #dc3545 !important;
+}
+
+.news-item.border-warning {
+    border-left-color: #ffc107 !important;
+}
+
+.news-item.border-info {
+    border-left-color: #0dcaf0 !important;
+}
+
+.news-title {
+    color: #333;
+    line-height: 1.3;
+}
+
+.news-description {
+    line-height: 1.4;
+}
+
+.news-tags .badge {
+    font-size: 0.7em;
+    margin-bottom: 2px;
+}
+
+.news-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.bg-light-danger {
+    background-color: rgba(220, 53, 69, 0.1) !important;
+}
+
+.bg-light-warning {
+    background-color: rgba(255, 193, 7, 0.1) !important;
+}
+
+.bg-light-info {
+    background-color: rgba(13, 202, 240, 0.1) !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .news-item .row {
+        flex-direction: column;
+    }
+    
+    .news-item .col-md-2 {
+        margin-bottom: 15px;
+    }
+    
+    .news-image {
+        height: 200px !important;
+    }
+}
+</style>
+
+<script>
+// Función para refrescar datos RSS
+function refreshRSSData() {
+    const btn = document.getElementById('refreshRSSBtn');
+    const icon = btn.querySelector('i');
+    
+    btn.disabled = true;
+    icon.className = 'fas fa-spinner fa-spin';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Actualizando...';
+    
+    fetch('{% url "dashboard:refresh_rss" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/x-www-form-urlencoded',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('Datos RSS actualizados correctamente', 'success');
+            // Recargar la página para mostrar los nuevos datos
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        } else {
+            showAlert('Error actualizando datos RSS: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error de red:', error);
+        showAlert('Error de conexión con el servidor', 'danger');
+    })
+    .finally(() => {
+        btn.disabled = false;
+        icon.className = 'fas fa-sync-alt';
+        btn.innerHTML = '<i class="fas fa-sync-alt"></i> Refrescar';
+    });
+}
+
+// Función para mostrar alertas
+function showAlert(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.parentNode.removeChild(alertDiv);
+        }
+    }, 5000);
+}
+
+// Auto-refresh cada 5 minutos
+setInterval(() => {
+    // Solo auto-refresh si no hay actividad del usuario
+    if (document.hidden) return;
+    
+    refreshRSSData();
+}, 300000); // 5 minutos
+</script>
+{% endblock %}

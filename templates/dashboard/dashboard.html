@@ -1,0 +1,820 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Sistema REF{% endblock %}
+
+{% block content %}
+
+    <!-- Contenido Principal -->
+    <div class="row">
+        <div class="col-12 dashboard-content">
+            <!-- Alerta informativa para ASCENSO -->
+            {% if filtros.torneo_selected == 'ASCENSO' %}
+            <div class="alert alert-info mb-3" style="background-color: #17a2b8; color: white; border: none; border-radius: 0;">
+                <div class="text-center">
+                    <p class="mb-0">
+                        En el presente se detallan los encuentros futbolísticos más relevantes de la fecha en vigencia, considerados de interés por posibles factores de riesgo<br>
+                        (rivalidad histórica, zona de ascenso o descenso, mal desempeño futbolístico, manifestaciones en redes sociales, amenazas, etc.).
+                    </p>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Próximos encuentros / Alertas -->
+            <div class="dashboard-card no-header-bg">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Próximos encuentros / Alertas (detalle)</h5>
+                    <div class="sync-buttons" role="group">
+                        <button class="btn btn-success btn-sm" onclick="sincronizarTabla('encuentros')" id="syncEncuentrosBtn">
+                            <i class="fas fa-sync-alt"></i> Encuentros
+                        </button>
+                        <button class="btn btn-info btn-sm" onclick="sincronizarTabla('ranking')" id="syncRankingBtn">
+                            <i class="fas fa-sync-alt"></i> Ranking
+                        </button>
+                        <button class="btn btn-warning btn-sm" onclick="sincronizarTabla('mapa')" id="syncMapaBtn">
+                            <i class="fas fa-sync-alt"></i> Incidentes
+                        </button>
+                        <button class="btn btn-primary btn-sm" onclick="sincronizarTodo()" id="syncAllBtn">
+                            <i class="fas fa-sync-alt"></i> Todo
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                        <div class="table-responsive dashboard-table">
+                        <table class="table">
+                            <thead>
+                                    <tr>
+                                    <th class="text-center">Club Local</th>
+                                    <th class="text-center">Club Visitante</th>
+                                        <th class="text-center">Fecha</th>
+                                        <th class="text-center">Hora</th>
+                                        <th class="text-center">Riesgo</th>
+                                    <th class="text-center">Motivo del Riesgo</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                {% for encuentro in encuentros %}
+                                <tr>
+                                    <td class="text-center align-middle">
+                                        <div class="club-info">
+                                            {% if encuentro.escudo_local %}
+                                                <img src="{{ encuentro.escudo_local }}" alt="{{ encuentro.club_local }}" 
+                                                     class="club-escudo">
+                                            {% endif %}
+                                            <div class="club-nombre">{{ encuentro.club_local }}</div>
+                                        </div>
+                                    </td>
+                                    <td class="text-center align-middle">
+                                        <div class="club-info">
+                                            {% if encuentro.escudo_visitante %}
+                                                <img src="{{ encuentro.escudo_visitante }}" alt="{{ encuentro.club_visitante }}" 
+                                                     class="club-escudo">
+                                            {% endif %}
+                                            <div class="club-nombre">{{ encuentro.club_visitante }}</div>
+                                        </div>
+                                    </td>
+                                        <td class="text-center align-middle">{{ encuentro.fecha }}</td>
+                                        <td class="text-center align-middle">{{ encuentro.hora }}</td>
+                                        <td class="text-center align-middle risk-cell
+                                            {% if encuentro.nivel_riesgo == 'BAJO' %}risk-bajo
+                                            {% elif encuentro.nivel_riesgo == 'MEDIO' %}risk-medio
+                                            {% elif encuentro.nivel_riesgo == 'ALTO' %}risk-alto
+                                            {% elif encuentro.nivel_riesgo == 'CRITICO' %}risk-critico
+                                            {% else %}risk-desconocido{% endif %}">
+                                            {{ encuentro.nivel_riesgo }}
+                                        </td>
+                        <td class="align-middle">
+                            {% if puede_ver_motivo_riesgo %}
+                            <div class="motivo-container">
+                                <div class="motivo-texto" id="motivo-{{ forloop.counter }}">
+                                    {{ encuentro.motivo_alerta|urlize|linebreaks }}
+                                </div>
+                                {% if encuentro.motivo_alerta|length > 300 %}
+                                <div class="ver-mas-btn" onclick="toggleMotivo({{ forloop.counter }}, '{{ encuentro.motivo_alerta|escapejs }}')">
+                                    <i class="fas fa-chevron-down"></i> Ver más
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% else %}
+                            <small class="text-muted">
+                                <i class="fas fa-lock"></i> Acceso restringido
+                            </small>
+                            {% endif %}
+                        </td>
+                                    </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted">No hay encuentros disponibles</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                </div>
+            </div>
+
+            <!-- Conflictividad y Rankings (solo para torneos no-copa) -->
+            {% if not es_torneo_copa %}
+            <div class="row mb-4 conflictividad-container">
+                <div class="col-md-6">
+                    <div class="dashboard-card">
+                        <div class="card-header conflictividad-header">
+                            <h6 class="mb-0">Conflictividad de los últimos 3 meses.</h6>
+                            <small class="text-muted">Se presentan gráficos y mapas con filtros aplicables.</small>
+                        </div>
+                        <div class="card-body piramide-container">
+                                <h6>Pirámide invertida por Club (Top 5)</h6>
+                                <div class="pyramid-chart">
+                                    {% for club_data in piramide_data_3_meses %}
+                                    <div class="pyramid-level pyramid-level-{{ forloop.counter }}">
+                                        <span>{{ club_data.club }} ({{ club_data.cantidad }} conflictos)</span>
+                                    </div>
+                                    {% empty %}
+                                    <div class="text-center text-muted">No hay datos de ranking disponibles</div>
+                                    {% endfor %}
+                                </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="dashboard-card">
+                        <div class="card-header conflictividad-header">
+                            <h6 class="mb-0">Conflictividad histórica 2020 hasta la actualidad</h6>
+                            <small class="text-muted">Se presentan gráficos y mapas con filtros aplicables.</small>
+                        </div>
+                        <div class="card-body piramide-container">
+                                <h6>Pirámide invertida por Club (Top 5)</h6>
+                                <div class="pyramid-chart">
+                                    {% for club_data in piramide_data_historico %}
+                                    <div class="pyramid-level pyramid-level-{{ forloop.counter }}">
+                                        <span>{{ club_data.club }} ({{ club_data.cantidad }} conflictos)</span>
+                                    </div>
+                                    {% empty %}
+                                    <div class="text-center text-muted">No hay datos históricos disponibles</div>
+                                    {% endfor %}
+                                </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Histórico de hechos (solo para torneos no-copa) -->
+            {% if not es_torneo_copa %}
+            <div class="dashboard-card no-header-bg">
+                <div class="card-header">
+                    <h5 class="mb-0">Histórico de hechos</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Filtros para histórico -->
+                    <div class="historical-filters">
+                        <form method="get" id="historico-form">
+                        <input type="hidden" name="torneo" value="{{ filtros.torneo_selected }}">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label for="historico_club" class="form-label">Club</label>
+                                <select class="form-select" id="historico_club" name="historico_club">
+                                    <option value="">Todos los clubes</option>
+                                    {% for club in clubes_historico %}
+                                    <option value="{{ club }}" {% if filtros_historico.club == club %}selected{% endif %}>{{ club }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="historico_tipo" class="form-label">Tipo de Incidente</label>
+                                <select class="form-select" id="historico_tipo" name="historico_tipo">
+                                    <option value="">Todos los tipos</option>
+                                    {% for tipo in tipos_incidentes %}
+                                    <option value="{{ tipo }}" {% if filtros_historico.tipo == tipo %}selected{% endif %}>{{ tipo }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label for="historico_fecha_desde" class="form-label">Fecha Desde</label>
+                                <input type="date" class="form-control" id="historico_fecha_desde" name="historico_fecha_desde" value="{{ filtros_historico.fecha_desde }}">
+                            </div>
+                            <div class="col-md-2">
+                                <label for="historico_fecha_hasta" class="form-label">Fecha Hasta</label>
+                                <input type="date" class="form-control" id="historico_fecha_hasta" name="historico_fecha_hasta" value="{{ filtros_historico.fecha_hasta }}">
+                            </div>
+                        </div>
+                        </form>
+                        
+                        <!-- Contenedor de botones separado -->
+                        <div class="mt-3">
+                            <div class="d-flex gap-2 justify-content-start">
+                                <button type="submit" form="historico-form" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-filter"></i> Filtrar
+                                </button>
+                                <a href="?torneo={{ filtros.torneo_selected }}" class="btn btn-secondary btn-sm">
+                                    <i class="fas fa-times"></i> Limpiar
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                        <div class="table-responsive dashboard-table historico-table">
+                        <table class="table">
+                            <thead class="table-dark">
+                                    <tr>
+                                        <th class="text-center">Club</th>
+                                    <th class="text-center">Fecha</th>
+                                    <th class="text-center">Relato del Hecho</th>
+                                    <th class="text-center">Motivo</th>
+                                    <th class="text-center">Partido</th>
+                                        <th class="text-center">Localidad</th>
+                                    <th class="text-center">Tipo de Lugar</th>
+                                    {% if puede_ver_relato_hecho %}
+                                    <th class="text-center">Contexto</th>
+                                    {% endif %}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                {% for incidente in incidentes %}
+                                <tr>
+                                    <td class="text-center">{{ incidente.raw_data.CLUB_DE_FÚTBOL|default:incidente.club_local }}</td>
+                                    <td class="text-center">{{ incidente.raw_data.FECHA_DEL_HECHO|default:incidente.fecha_incidente|date:"d/m/Y" }}</td>
+                                    <td>
+                                        {% if puede_ver_relato_hecho %}
+                                        <div class="relato-container">
+                                            <div class="relato-texto" id="relato-{{ forloop.counter }}">
+                                                {{ incidente.raw_data.RELATO_DEL_HECHO|default:incidente.descripcion }}
+                                            </div>
+                                            {% if incidente.raw_data.RELATO_DEL_HECHO|length > 200 or incidente.descripcion|length > 200 %}
+                                            <button class="ver-mas-relato-btn" onclick="toggleRelato({{ forloop.counter }}, '{{ incidente.raw_data.RELATO_DEL_HECHO|default:incidente.descripcion|escapejs }}')">
+                                                <span>Ver más</span>
+                                                <i class="fas fa-chevron-down"></i>
+                                            </button>
+                                            {% endif %}
+                                        </div>
+                                        {% else %}
+                                        <div class="text-muted">
+                                            <i class="fas fa-lock"></i> Acceso restringido
+                                        </div>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">{{ incidente.raw_data.MOTIVO|default:incidente.tipo }}</td>
+                                    <td class="text-center">{{ incidente.raw_data.PARTIDO|default:incidente.estadio }}</td>
+                                    <td class="text-center">{{ incidente.raw_data.LOCALIDAD|default:incidente.estadio }}</td>
+                                    <td class="text-center">{{ incidente.estadio|default:"No especificado" }}</td>
+                                    {% if puede_ver_relato_hecho %}
+                                    <td>
+                                        <div class="contexto-container">
+                                            <div class="contexto-texto" id="contexto-{{ forloop.counter }}">
+                                                {{ incidente.raw_data.CONTEXTO|default:incidente.descripcion }}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    {% endif %}
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="{% if puede_ver_relato_hecho %}8{% else %}7{% endif %}" class="text-center text-muted">No hay incidentes registrados</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Paginación para histórico -->
+                        {% if incidentes.has_other_pages %}
+                        <nav aria-label="Paginación de histórico de hechos" class="mt-3">
+                            <ul class="pagination justify-content-center">
+                                {% if incidentes.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?{% if request.GET.torneo %}torneo={{ request.GET.torneo }}&{% endif %}{% if request.GET.historico_club %}historico_club={{ request.GET.historico_club }}&{% endif %}{% if request.GET.historico_tipo %}historico_tipo={{ request.GET.historico_tipo }}&{% endif %}{% if request.GET.historico_fecha_desde %}historico_fecha_desde={{ request.GET.historico_fecha_desde }}&{% endif %}{% if request.GET.historico_fecha_hasta %}historico_fecha_hasta={{ request.GET.historico_fecha_hasta }}&{% endif %}incidentes_page={{ incidentes.previous_page_number }}">
+                                            <i class="fas fa-chevron-left"></i>
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link"><i class="fas fa-chevron-left"></i></span>
+                                    </li>
+                                {% endif %}
+
+                                {% for num in incidentes.paginator.page_range %}
+                                    {% if incidentes.number == num %}
+                                        <li class="page-item active">
+                                            <span class="page-link">{{ num }}</span>
+                                        </li>
+                                    {% elif num > incidentes.number|add:'-3' and num < incidentes.number|add:'3' %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?{% if request.GET.torneo %}torneo={{ request.GET.torneo }}&{% endif %}{% if request.GET.historico_club %}historico_club={{ request.GET.historico_club }}&{% endif %}{% if request.GET.historico_tipo %}historico_tipo={{ request.GET.historico_tipo }}&{% endif %}{% if request.GET.historico_fecha_desde %}historico_fecha_desde={{ request.GET.historico_fecha_desde }}&{% endif %}{% if request.GET.historico_fecha_hasta %}historico_fecha_hasta={{ request.GET.historico_fecha_hasta }}&{% endif %}incidentes_page={{ num }}">{{ num }}</a>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+
+                                {% if incidentes.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?{% if request.GET.torneo %}torneo={{ request.GET.torneo }}&{% endif %}{% if request.GET.historico_club %}historico_club={{ request.GET.historico_club }}&{% endif %}{% if request.GET.historico_tipo %}historico_tipo={{ request.GET.historico_tipo }}&{% endif %}{% if request.GET.historico_fecha_desde %}historico_fecha_desde={{ request.GET.historico_fecha_desde }}&{% endif %}{% if request.GET.historico_fecha_hasta %}historico_fecha_hasta={{ request.GET.historico_fecha_hasta }}&{% endif %}incidentes_page={{ incidentes.next_page_number }}">
+                                            <i class="fas fa-chevron-right"></i>
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link"><i class="fas fa-chevron-right"></i></span>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                        {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Mapa de ubicación de los incidentes (solo para torneos no-copa) -->
+            {% if not es_torneo_copa %}
+            <div class="dashboard-card no-header-bg">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Mapa de ubicación de los incidentes de conflicto</h5>
+                    <a href="{% url 'dashboard:mapa_incidentes' %}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-external-link-alt"></i> Ver Mapa Completo con Filtros
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div>
+                        <i class="fas fa-info-circle" style="color: #064669;"></i>
+                        <span style="color: #064669;"><strong>Vista previa:</strong> Mapa con los últimos incidentes de todos los torneos. 
+                        Haz clic en "Ver Mapa Completo" para acceder a filtros avanzados por torneo, club, fecha y tipo.</span>
+                    </div>
+                    <div class="dashboard-map-container">
+                        <div id="map" style="height: 400px; width: 100%;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+    {% endif %}
+
+<!-- Modal para detalles del encuentro -->
+<div class="modal fade" id="detalleModal" tabindex="-1" aria-labelledby="detalleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="detalleModalLabel">Detalle del Encuentro</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+            <div class="modal-body" id="detalleModalBody">
+                <!-- Contenido dinámico -->
+                </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+// Función para sincronizar una tabla específica
+    function sincronizarTabla(tabla) {
+        const btnId = `sync${tabla.charAt(0).toUpperCase() + tabla.slice(1)}Btn`;
+        const btn = document.getElementById(btnId);
+        const icon = btn.querySelector('i');
+        
+        btn.disabled = true;
+        icon.className = 'fas fa-spinner fa-spin';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sincronizando...';
+        
+        const url = '{% url "dashboard:sincronizar_sheets" %}?torneo={{ filtros.torneo_selected }}&tabla=' + tabla;
+        
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const resultado = data.resultado;
+                showAlert(`${tabla.charAt(0).toUpperCase() + tabla.slice(1)} actualizado correctamente.`, 'success');
+                // Recargar la página después de un breve delay para que el usuario vea el mensaje
+                setTimeout(() => {
+                    location.reload();
+                }, 1500);
+            } else {
+                showAlert(`Error sincronizando ${tabla}: ${data.message || data.error}`, 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error de red o servidor:', error);
+            showAlert('Error de conexión con el servidor.', 'danger');
+        })
+        .finally(() => {
+            btn.disabled = false;
+            icon.className = 'fas fa-sync-alt';
+            btn.innerHTML = '<i class="fas fa-sync-alt"></i> ' + tabla.charAt(0).toUpperCase() + tabla.slice(1);
+        });
+    }
+
+    // Función para sincronizar todo
+    function sincronizarTodo() {
+        const btn = document.getElementById('syncAllBtn');
+        const icon = btn.querySelector('i');
+        
+        btn.disabled = true;
+        icon.className = 'fas fa-spinner fa-spin';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sincronizando...';
+        
+        fetch('{% url "dashboard:sincronizar_sheets" %}?torneo={{ filtros.torneo_selected }}&tabla=all', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const resultado = data.resultado;
+                showAlert(`Sincronización completada correctamente.`, 'success');
+                // Recargar la página después de un breve delay para que el usuario vea el mensaje
+                setTimeout(() => {
+                    location.reload();
+                }, 1500);
+            } else {
+                showAlert(`Error en la sincronización: ${data.message || data.error}`, 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error de red o servidor:', error);
+            showAlert('Error de conexión con el servidor.', 'danger');
+        })
+        .finally(() => {
+            btn.disabled = false;
+            icon.className = 'fas fa-sync-alt';
+            btn.innerHTML = '<i class="fas fa-sync-alt"></i> Todo';
+        });
+    }
+    
+    // Función para mostrar detalles del encuentro
+function verDetalleEncuentro(clubLocal, clubVisitante, fecha, hora, nivelRiesgo, motivoRiesgo, escudoLocal, escudoVisitante) {
+        const modal = document.createElement('div');
+        modal.className = 'modal fade';
+        modal.innerHTML = `
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Detalle del Encuentro</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                    <div class="row mb-4">
+                            <div class="col-md-6">
+                                <h6>Club Local</h6>
+                            <div class="d-flex align-items-center">
+                                ${escudoLocal ? `<img src="${escudoLocal}" alt="${clubLocal}" class="me-2" style="width: 32px; height: 32px; object-fit: contain;">` : ''}
+                                <p class="mb-0">${clubLocal}</p>
+                            </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Club Visitante</h6>
+                            <div class="d-flex align-items-center">
+                                ${escudoVisitante ? `<img src="${escudoVisitante}" alt="${clubVisitante}" class="me-2" style="width: 32px; height: 32px; object-fit: contain;">` : ''}
+                                <p class="mb-0">${clubVisitante}</p>
+                            </div>
+                            </div>
+                        </div>
+                    <div class="row mb-4">
+                            <div class="col-md-6">
+                                <h6>Fecha</h6>
+                                <p>${fecha}</p>
+                            </div>
+                            <div class="col-md-6">
+                            <h6>Hora</h6>
+                            <p>${hora}</p>
+                        </div>
+                    </div>
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6>Nivel de Riesgo</h6>
+                            <span class="badge ${getRiesgoClass(nivelRiesgo)}">${nivelRiesgo}</span>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <h6>Motivo del Riesgo</h6>
+                            <div class="alert alert-info">
+                                {% if puede_ver_motivo_riesgo %}
+                                <p class="mb-0">${motivoRiesgo}</p>
+                                {% else %}
+                                <p class="mb-0">
+                                    <i class="fas fa-lock"></i> 
+                                    Acceso restringido - Solo administradores pueden ver esta información
+                                </p>
+                                {% endif %}
+                            </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        const bootstrapModal = new bootstrap.Modal(modal);
+        bootstrapModal.show();
+        
+        modal.addEventListener('hidden.bs.modal', function() {
+            document.body.removeChild(modal);
+        });
+    }
+
+// Función para obtener la clase CSS del nivel de riesgo
+function getRiesgoClass(nivelRiesgo) {
+    switch(nivelRiesgo) {
+        case 'BAJO': return 'bg-success';
+        case 'MEDIO': return 'bg-warning';
+        case 'ALTO': return 'bg-danger';
+        case 'CRITICO': return 'bg-dark';
+        default: return 'bg-secondary';
+    }
+}
+
+    // Función para convertir URLs a links
+    function urlize(text) {
+        const urlRegex = /(https?:\/\/[^\s]+)/g;
+        return text.replace(urlRegex, function(url) {
+            return '<a href="' + url + '" target="_blank" class="motivo-link"><i class="fas fa-external-link-alt"></i> ' + url + '</a>';
+        });
+    }
+
+    // Función para toggle del motivo del riesgo
+    function toggleMotivo(index, textoCompleto) {
+        const motivoElement = document.getElementById('motivo-' + index);
+        const btn = motivoElement.nextElementSibling;
+        
+        if (btn.textContent.trim() === 'Ver más') {
+            motivoElement.innerHTML = urlize(textoCompleto);
+            motivoElement.classList.add('expanded');
+            btn.innerHTML = '<i class="fas fa-chevron-up"></i> Ver menos';
+        } else {
+            motivoElement.innerHTML = urlize(textoCompleto);
+            motivoElement.classList.remove('expanded');
+            btn.innerHTML = '<i class="fas fa-chevron-down"></i> Ver más';
+        }
+    }
+    
+    // Función para toggle del contexto en histórico
+    function toggleContexto(index, textoCompleto) {
+        const contextoElement = document.getElementById('contexto-' + index);
+        const btn = contextoElement.nextElementSibling;
+        
+        if (btn.querySelector('span').textContent.trim() === 'Ver más') {
+            contextoElement.textContent = textoCompleto;
+            contextoElement.classList.add('expanded');
+            btn.innerHTML = '<span>Ver menos</span><i class="fas fa-chevron-up"></i>';
+        } else {
+            contextoElement.textContent = textoCompleto;
+            contextoElement.classList.remove('expanded');
+            btn.innerHTML = '<span>Ver más</span><i class="fas fa-chevron-down"></i>';
+        }
+    }
+    
+    // Función para toggle del relato del hecho
+    function toggleRelato(index, textoCompleto) {
+        const relatoElement = document.getElementById('relato-' + index);
+        const btn = relatoElement.nextElementSibling;
+        
+        if (btn.querySelector('span').textContent.trim() === 'Ver más') {
+            relatoElement.innerHTML = urlize(textoCompleto);
+            relatoElement.classList.add('expanded');
+            btn.innerHTML = '<span>Ver menos</span><i class="fas fa-chevron-up"></i>';
+        } else {
+            relatoElement.innerHTML = urlize(textoCompleto);
+            relatoElement.classList.remove('expanded');
+            btn.innerHTML = '<span>Ver más</span><i class="fas fa-chevron-down"></i>';
+        }
+    }
+    
+    // Función para mostrar alertas
+    function showAlert(message, type) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+        alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        alertDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+    
+        document.body.appendChild(alertDiv);
+        
+        setTimeout(() => {
+            if (alertDiv.parentNode) {
+                alertDiv.parentNode.removeChild(alertDiv);
+            }
+        }, 5000);
+    }
+    
+// Inicializar mapa
+function initMap() {
+    const map = L.map('map').setView([-34.6037, -58.3816], 10);
+    
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+        
+        // Agregar marcadores de incidentes
+    const incidentesData = {{ incidentes_mapa|safe }};
+    console.log('Incidentes data:', incidentesData);
+    
+    incidentesData.forEach(function(incidente) {
+        if (incidente.latitud && incidente.longitud) {
+            // Obtener color según el tipo de incidente
+            const colors = {
+                'VIOLENCIA': 'red',
+                'DESTRUCCION': 'orange', 
+                'INVASION': 'darkred',
+                'DISPUTA': 'purple',
+                'OTRO': 'blue'
+            };
+            const color = colors[incidente.tipo] || 'gray';
+            
+            // Crear marcador con color
+            const marker = L.circleMarker([parseFloat(incidente.latitud), parseFloat(incidente.longitud)], {
+                radius: 8,
+                fillColor: color,
+                color: 'white',
+                weight: 2,
+                opacity: 1,
+                fillOpacity: 0.8
+            }).addTo(map);
+            
+            marker.bindPopup(`
+                <div style="min-width: 300px; max-width: 400px; background-color: #ffffff !important; background: #ffffff !important; padding: 15px; border-radius: 8px; border: 2px solid #e9ecef; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+                    <h6 style="margin: 0 0 10px 0; color: #333; border-bottom: 1px solid #eee; padding-bottom: 8px;">
+                        <i class="fas fa-exclamation-triangle" style="color: ${color};"></i>
+                        ${incidente.club_local || 'Incidente'}
+                    </h6>
+                    <p style="margin: 5px 0;"><strong>Tipo:</strong> ${incidente.tipo || 'N/A'}</p>
+                    <p style="margin: 5px 0;"><strong>Fecha:</strong> ${incidente.fecha_incidente || 'N/A'}</p>
+                    {% if puede_ver_relato_hecho %}
+                    <p style="margin: 5px 0;"><strong>Relato del Hecho:</strong> ${incidente.descripcion || 'Sin descripción'}</p>
+                    {% else %}
+                    <p style="margin: 5px 0;"><strong>Relato del Hecho:</strong> <i class="fas fa-lock"></i> Acceso restringido</p>
+                    {% endif %}
+                    <p style="margin: 5px 0;"><strong>Club:</strong> ${incidente.club_local || 'N/A'}</p>
+                    <p style="margin: 5px 0;"><strong>Contexto:</strong> ${incidente.raw_data?.CONTEXTO || 'N/A'}</p>
+                    <p style="margin: 5px 0;"><strong>Motivo:</strong> ${incidente.raw_data?.MOTIVO || 'N/A'}</p>
+                    <p style="margin: 5px 0;"><strong>Dirección:</strong> ${incidente.raw_data?.['DIRECCIÓN DEL HECHO'] || 'N/A'}</p>
+                    <p style="margin: 5px 0;"><strong>Partido:</strong> ${incidente.raw_data?.PARTIDO || 'N/A'}</p>
+                    <p style="margin: 5px 0;"><strong>Localidad:</strong> ${incidente.raw_data?.LOCALIDAD || 'N/A'}</p>
+                    <p style="margin: 5px 0;"><strong>Tipo de Lugar:</strong> ${incidente.raw_data?.['TIPO DE LUGAR'] || incidente.estadio || 'N/A'}</p>
+                    <p style="margin: 5px 0;"><strong>Torneo:</strong> ${incidente.torneo || 'N/A'}</p>
+                </div>
+            `);
+        }
+    });
+}
+
+// Inicializar el mapa cuando se carga la página
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof L !== 'undefined') {
+        initMap();
+        }
+    });
+</script>
+
+<!-- Leaflet CSS y JS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+
+<style>
+/* Estilos para links en motivos de riesgo */
+.motivo-link {
+    color: #007bff !important;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+/* Estilos específicos para popups de Leaflet en el dashboard */
+.leaflet-popup-content-wrapper {
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    border: 2px solid #e9ecef !important;
+    border-radius: 0.5rem !important;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.2) !important;
+    opacity: 1 !important;
+    z-index: 1000 !important;
+}
+
+.leaflet-popup-content {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    color: #333333 !important;
+    line-height: 1.4 !important;
+    margin: 0.75rem !important;
+    background: transparent !important;
+    background-color: transparent !important;
+}
+
+.leaflet-popup-content h6 {
+    border-bottom: 1px solid #eee;
+    padding-bottom: 8px;
+    margin: 0 0 0.5rem 0 !important;
+    color: #064669 !important;
+    font-size: 1.1rem !important;
+    font-weight: 600 !important;
+}
+
+.leaflet-popup-content p {
+    margin: 0.25rem 0 !important;
+    font-size: 0.9rem !important;
+    color: #333333 !important;
+}
+
+.leaflet-popup-content strong {
+    color: #064669 !important;
+    font-weight: 600 !important;
+}
+
+/* Estilos para la punta del popup */
+.leaflet-popup-tip {
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    border: 2px solid #e9ecef !important;
+    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Asegurar que el popup esté por encima de todo */
+.leaflet-popup {
+    z-index: 1000 !important;
+}
+
+.leaflet-popup-pane {
+    z-index: 1000 !important;
+    margin: 2px;
+    transition: all 0.3s ease;
+}
+
+.motivo-link:hover {
+    border-color: rgba(0, 123, 255, 0.5);
+    text-decoration: none;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 123, 255, 0.3);
+}
+
+.motivo-link i {
+    margin-right: 4px;
+    font-size: 0.8em;
+}
+
+/* Estilos para contexto (ancho estándar) */
+.contexto-container {
+    max-width: 200px;
+}
+
+.contexto-texto {
+    font-size: 0.9em;
+    line-height: 1.4;
+    max-height: 80px;
+    overflow: hidden;
+    text-align: left;
+}
+
+.contexto-texto.expanded {
+    max-height: none;
+}
+
+/* Estilos para relato del hecho (ancho amplio) */
+.relato-container {
+    max-width: none;
+    width: 100%;
+}
+
+.relato-texto {
+    font-size: 0.9em;
+    line-height: 1.4;
+    max-height: 100px;
+    overflow: hidden;
+    text-align: left;
+}
+
+.relato-texto.expanded {
+    max-height: none;
+}
+
+.ver-mas-relato-btn {
+    background: none;
+    border: none;
+    color: #064669;
+    font-size: 0.8em;
+    cursor: pointer;
+    padding: 2px 0;
+    margin-top: 5px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 600;
+}
+
+.ver-mas-relato-btn:hover {
+    color: #053a5a;
+    text-decoration: underline;
+}
+</style>
+
+{% endblock %}

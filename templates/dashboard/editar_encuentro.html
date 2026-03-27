@@ -1,0 +1,162 @@
+{% extends 'base.html' %}
+
+{% block title %}Editar Encuentro - Sistema REF{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-edit"></i> Editar Encuentro: {{ encuentro.club_local }} vs {{ encuentro.club_visitante }}</h5>
+                    <a href="{% url 'dashboard:dashboard' %}" class="btn btn-secondary btn-sm">
+                        <i class="fas fa-arrow-left"></i> Volver al Dashboard
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Información:</strong> Los cambios se aplicarán tanto en Google Sheets como en la base de datos local.
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Nota sobre permisos:</strong> Si no tienes permisos de edición en Google Sheets, los cambios solo se aplicarán en la base de datos local. 
+                        Para editar Google Sheets, comparte la hoja con: <code>ref-583@just-coda-473000-f4.iam.gserviceaccount.com</code> con permisos de <strong>Editor</strong>.
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="campo" class="form-label">Campo a Editar</label>
+                                    <select class="form-select" id="campo" name="campo" required>
+                                        <option value="">Seleccionar campo...</option>
+                                        {% for campo, descripcion in campos_editables %}
+                                        <option value="{{ campo }}">{{ descripcion }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="nuevo_valor" class="form-label">Nuevo Valor</label>
+                                    <input type="text" class="form-control" id="nuevo_valor" name="nuevo_valor" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save"></i> Actualizar Encuentro
+                                    </button>
+                                    <a href="{% url 'dashboard:dashboard' %}" class="btn btn-secondary">
+                                        <i class="fas fa-times"></i> Cancelar
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                    
+                    <hr>
+                    
+                    <h6>Información Actual del Encuentro:</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-sm">
+                                <tr>
+                                    <td><strong>Club Local:</strong></td>
+                                    <td>{{ encuentro.club_local }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Club Visitante:</strong></td>
+                                    <td>{{ encuentro.club_visitante }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Fecha:</strong></td>
+                                    <td>{{ encuentro.fecha }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-sm">
+                                <tr>
+                                    <td><strong>Hora:</strong></td>
+                                    <td>{{ encuentro.hora }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Nivel de Riesgo:</strong></td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if encuentro.nivel_riesgo == 'BAJO' %}bg-success
+                                            {% elif encuentro.nivel_riesgo == 'MEDIO' %}bg-warning
+                                            {% elif encuentro.nivel_riesgo == 'ALTO' %}bg-danger
+                                            {% elif encuentro.nivel_riesgo == 'CRITICO' %}bg-dark
+                                            {% else %}bg-secondary{% endif %}">
+                                            {{ encuentro.nivel_riesgo }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Estadio:</strong></td>
+                                    <td>{{ encuentro.estadio }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    {% if encuentro.motivo_alerta %}
+                    <div class="row">
+                        <div class="col-12">
+                            <table class="table table-sm">
+                                <tr>
+                                    <td><strong>Motivo de Alerta:</strong></td>
+                                    <td>{{ encuentro.motivo_alerta }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            <strong>Torneo:</strong> {{ torneo }} | 
+                            <strong>Última sincronización:</strong> {{ encuentro.last_sync|date:"d/m/Y H:i" }}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const campoSelect = document.getElementById('campo');
+    const nuevoValorInput = document.getElementById('nuevo_valor');
+    
+    // Valores actuales del encuentro
+    const valoresActuales = {
+        'club_local': '{{ encuentro.club_local }}',
+        'club_visitante': '{{ encuentro.club_visitante }}',
+        'fecha': '{{ encuentro.fecha }}',
+        'hora': '{{ encuentro.hora }}',
+        'nivel_riesgo': '{{ encuentro.nivel_riesgo }}',
+        'motivo_alerta': '{{ encuentro.motivo_alerta }}'
+    };
+    
+    // Actualizar placeholder cuando cambie el campo
+    campoSelect.addEventListener('change', function() {
+        const campoSeleccionado = this.value;
+        if (campoSeleccionado && valoresActuales[campoSeleccionado]) {
+            nuevoValorInput.placeholder = `Valor actual: ${valoresActuales[campoSeleccionado]}`;
+        } else {
+            nuevoValorInput.placeholder = 'Ingrese el nuevo valor...';
+        }
+    });
+});
+</script>
+{% endblock %}

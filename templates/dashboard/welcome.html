@@ -1,0 +1,224 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}¡Bienvenidos! - Sistema REF{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Ocultar el submenú por defecto en la página de bienvenida */
+body:not(.welcome-page) .welcome-title-bar {
+    display: none !important;
+}
+
+body.welcome-page .main-navbar {
+    display: none !important;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.body.classList.add('welcome-page');
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="welcome-container">
+    <div class="welcome-content">
+        <div class="welcome-cards">
+            <div class="welcome-section">
+                <h3 class="section-title">Qué es REF y para qué sirve</h3>
+                <p class="section-content">
+                    El REF (Riesgo en Encuentro Futbolístico) es una plataforma/panel de control digital que centraliza toda la información crítica vinculada a los partidos de fútbol en Provincia de Buenos Aires, Argentina: clubes, facciones de hinchas, antecedentes de incidentes, derechos de admisión y noticias.
+                </p>
+            </div>
+            
+            <div class="welcome-section">
+                <h3 class="section-title">¿Para qué sirve?</h3>
+                <ul class="section-list">
+                    <li><strong>Prevención:</strong> permite identificar partidos con riesgo alto/medio/bajo antes de que sucedan incidentes.</li>
+                    <li><strong>Seguimiento:</strong> concentra el histórico de eventos, conflictos y sanciones para no perder contexto.</li>
+                    <li><strong>Gestión:</strong> conecta con documentación operativa vigente.</li>
+                    <li><strong>Decisión informada:</strong> da una vista clara de qué club, qué partido y qué facción requiere atención especial.</li>
+                </ul>
+                <p class="section-content">
+                    Es un sistema de inteligencia aplicada al fútbol, pensado para apoyar la seguridad y la logística de cada encuentro.
+                </p>
+            </div>
+            
+            <div class="welcome-section">
+                <h3 class="section-title">¿Cómo se navega?</h3>
+                <p class="navigation-intro">La navegación se organiza en módulos por Torneo:</p>
+                
+                <h4 class="module-title">Dashboard</h4>
+                <ul class="module-list">
+                    <li>Muestra el "ranking de conflictividad" (los clubes con más riesgo).</li>
+                    <li>Un mapa interactivo de incidentes.</li>
+                    <li>Tablas con los próximos encuentros y sus alertas.</li>
+                </ul>
+                
+                <h4 class="module-title">Clubes</h4>
+                <ul class="module-list">
+                    <li>Cada club tiene su ficha con datos institucionales.</li>
+                    <li>Se detallan facciones de hinchas, referentes, territorios y antecedentes.</li>
+                </ul>
+                
+                <h4 class="module-title">Derecho de admisión</h4>
+                <ul class="module-list">
+                    <li>Listado por club con motivos y estado (ej. hinchas sancionados).</li>
+                </ul>
+                
+                <h4 class="module-title">Redes y navegadores</h4>
+                <ul class="module-list">
+                    <li>Monitoreo de lo que circula en redes sociales y medios digitales.</li>
+                </ul>
+                
+                <h4 class="module-title">Operacionales vigentes</h4>
+                <ul class="module-list">
+                    <li>Links a planes de seguridad en PDF, accesibles desde la misma plataforma.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Ajustar el padding del título de bienvenida para que coincida con el contenido */
+.welcome-title-bar {
+    padding-left: 60px !important;
+    padding-right: 60px !important;
+}
+
+.welcome-container {
+    min-height: calc(100vh - 120px);
+    padding: 40px 40px;
+}
+
+.welcome-content {
+    max-width: 1200px;
+    width: 100%;
+    margin: 0;
+}
+
+.welcome-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.welcome-section {
+    background: var(--ref-white);
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.section-title {
+    color: #222;
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+    font-family: var(--ref-font-family);
+}
+
+.section-content {
+    color: #333;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    font-family: var(--ref-font-family);
+}
+
+.section-list {
+    margin: 20px 0;
+    padding-left: 20px;
+    list-style: none;
+}
+
+.section-list li {
+    margin-bottom: 4px;
+    position: relative;
+    color: #333;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    font-family: var(--ref-font-family);
+}
+
+.section-list li::before {
+    content: "•";
+    color: #333;
+    font-weight: bold;
+    position: absolute;
+    left: -15px;
+}
+
+.section-summary {
+    margin-top: 20px;
+    font-style: italic;
+    color: #555;
+    font-family: var(--ref-font-family);
+}
+
+.navigation-intro {
+    margin-bottom: 15px;
+    font-weight: 500;
+    color: #333;
+    font-size: 0.9rem;
+    font-family: var(--ref-font-family);
+}
+
+.module-title {
+    color: var(--ref-bg-main);
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 15px 0 8px 0;
+    font-family: var(--ref-font-family);
+}
+
+.module-list {
+    margin: 0 0 12px 0;
+    padding-left: 20px;
+    list-style: none;
+}
+
+.module-list li {
+    margin-bottom: 6px;
+    position: relative;
+    color: #555;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    font-family: var(--ref-font-family);
+}
+
+.module-list li::before {
+    content: "•";
+    color: #555;
+    font-weight: bold;
+    position: absolute;
+    left: -15px;
+}
+
+@media (max-width: 768px) {
+    .welcome-title-bar {
+        padding-left: 20px !important;
+        padding-right: 20px !important;
+    }
+    
+    .welcome-container {
+        padding: 20px;
+    }
+    
+    .welcome-section {
+        padding: 20px;
+    }
+    
+    .navigation-modules {
+        grid-template-columns: 1fr;
+    }
+    
+    .module-section {
+        padding: 15px;
+    }
+}
+</style>
+{% endblock %}

@@ -1,0 +1,246 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Mapa de Incidentes - Sistema REF{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-map-marker-alt"></i> Mapa de Incidentes de Conflicto</h5>
+                    <small class="text-muted">Mostrando {{ total_incidentes }} incidentes</small>
+                </div>
+                <div class="card-body">
+                    <!-- Filtros -->
+                    <form method="get" class="row g-3 mb-4">
+                        <div class="col-md-3">
+                            <label for="torneo" class="form-label">Torneo</label>
+                            <select class="form-select" id="torneo" name="torneo">
+                                <option value="">Todos los torneos</option>
+                                {% for torneo in torneos %}
+                                <option value="{{ torneo }}" {% if filtros.torneo == torneo %}selected{% endif %}>{{ torneo }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="club" class="form-label">Club</label>
+                            <select class="form-select" id="club" name="club">
+                                <option value="">Todos los clubes</option>
+                                {% for club in clubes %}
+                                <option value="{{ club }}" {% if filtros.club == club %}selected{% endif %}>{{ club }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="fecha_desde" class="form-label">Fecha Desde</label>
+                            <input type="date" class="form-control" id="fecha_desde" name="fecha_desde" value="{{ filtros.fecha_desde }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="fecha_hasta" class="form-label">Fecha Hasta</label>
+                            <input type="date" class="form-control" id="fecha_hasta" name="fecha_hasta" value="{{ filtros.fecha_hasta }}">
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-filter"></i> Aplicar Filtros
+                            </button>
+                            <a href="{% url 'dashboard:mapa_incidentes' %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Limpiar Filtros
+                            </a>
+                        </div>
+                    </form>
+                    
+                    <!-- Mapa -->
+                    <div id="map" style="height: 500px; width: 100%; border-radius: 8px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Leaflet CSS y JS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+
+<script>
+// Variables globales
+let map;
+let markers = [];
+
+// Variables de permisos del usuario
+const puedeVerRelatoHecho = {% if puede_ver_relato_hecho %}true{% else %}false{% endif %};
+
+// Función para obtener el color del marcador según el tipo de incidente
+function getMarkerColor(tipo) {
+    const colors = {
+        'VIOLENCIA': 'red',
+        'DESTRUCCION': 'orange',
+        'INVASION': 'darkred',
+        'DISPUTA': 'purple',
+        'OTRO': 'blue'
+    };
+    return colors[tipo] || 'gray';
+}
+
+
+// Función para inicializar el mapa
+function initMap() {
+    // Crear el mapa centrado en Buenos Aires
+    map = L.map('map').setView([-34.6037, -58.3816], 10);
+    
+    // Agregar capa de tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+    
+    // Cargar y mostrar incidentes
+    loadIncidentes();
+}
+
+// Función para cargar y mostrar incidentes
+function loadIncidentes() {
+    // Limpiar marcadores existentes
+    clearMarkers();
+    
+    // Obtener datos de incidentes
+    const incidentesData = {{ incidentes|safe }};
+    console.log('Cargando incidentes:', incidentesData);
+    
+    // Crear marcadores para cada incidente
+    incidentesData.forEach(function(incidente) {
+        if (incidente.latitud && incidente.longitud) {
+            const lat = parseFloat(incidente.latitud);
+            const lng = parseFloat(incidente.longitud);
+            
+            // Obtener color según el tipo
+            const color = getMarkerColor(incidente.tipo);
+            
+            // Crear marcador con color
+            const marker = L.circleMarker([lat, lng], {
+                radius: 8,
+                fillColor: color,
+                color: 'white',
+                weight: 2,
+                opacity: 1,
+                fillOpacity: 0.8
+            }).addTo(map)
+                .bindPopup(`
+                    <div style="min-width: 300px; max-width: 400px; background-color: #ffffff !important; background: #ffffff !important; padding: 15px; border-radius: 8px; border: 2px solid #e9ecef; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+                        <h6 style="margin: 0 0 10px 0; color: #333; border-bottom: 1px solid #eee; padding-bottom: 8px;">
+                            <i class="fas fa-exclamation-triangle" style="color: ${color};"></i>
+                            ${incidente.club_local || 'Incidente'}
+                        </h6>
+                        <p style="margin: 5px 0;"><strong>Tipo:</strong> ${incidente.tipo || 'N/A'}</p>
+                        <p style="margin: 5px 0;"><strong>Fecha:</strong> ${incidente.fecha_incidente || 'N/A'}</p>
+                        ${puedeVerRelatoHecho ? 
+                            `<p style="margin: 5px 0;"><strong>Relato del Hecho:</strong> ${incidente.descripcion || 'Sin descripción'}</p>` :
+                            `<p style="margin: 5px 0;"><strong>Relato del Hecho:</strong> <i class="fas fa-lock"></i> Acceso restringido</p>`
+                        }
+                        <p style="margin: 5px 0;"><strong>Club:</strong> ${incidente.club_local || 'N/A'}</p>
+                        <p style="margin: 5px 0;"><strong>Contexto:</strong> ${incidente.raw_data?.CONTEXTO || 'N/A'}</p>
+                        <p style="margin: 5px 0;"><strong>Motivo:</strong> ${incidente.raw_data?.MOTIVO || 'N/A'}</p>
+                        <p style="margin: 5px 0;"><strong>Dirección:</strong> ${incidente.raw_data?.['DIRECCIÓN DEL HECHO'] || 'N/A'}</p>
+                        <p style="margin: 5px 0;"><strong>Partido:</strong> ${incidente.raw_data?.PARTIDO || 'N/A'}</p>
+                        <p style="margin: 5px 0;"><strong>Localidad:</strong> ${incidente.raw_data?.LOCALIDAD || 'N/A'}</p>
+                        <p style="margin: 5px 0;"><strong>Tipo de Lugar:</strong> ${incidente.raw_data?.['TIPO DE LUGAR'] || incidente.estadio || 'N/A'}</p>
+                        <p style="margin: 5px 0;"><strong>Torneo:</strong> ${incidente.torneo || 'N/A'}</p>
+                    </div>
+                `);
+            
+            // Agregar a la lista de marcadores
+            markers.push(marker);
+        }
+    });
+    
+    // Ajustar la vista del mapa para mostrar todos los marcadores
+    if (markers.length > 0) {
+        const group = new L.featureGroup(markers);
+        map.fitBounds(group.getBounds().pad(0.1));
+    }
+    
+    console.log(`Mapa cargado con ${markers.length} incidentes`);
+}
+
+// Función para limpiar marcadores
+function clearMarkers() {
+    markers.forEach(marker => map.removeLayer(marker));
+    markers = [];
+}
+
+// Función para actualizar filtros dinámicamente
+function updateFilters() {
+    // Esta función se puede usar para filtros en tiempo real sin recargar la página
+    // Por ahora, los filtros se aplican al enviar el formulario
+}
+
+// Inicializar el mapa cuando se carga la página
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof L !== 'undefined') {
+        initMap();
+    } else {
+        console.error('Leaflet no está cargado');
+    }
+});
+</script>
+
+<style>
+
+/* Estilos específicos para popups de Leaflet */
+.leaflet-popup-content-wrapper {
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    border: 2px solid #e9ecef !important;
+    border-radius: 0.5rem !important;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.2) !important;
+    opacity: 1 !important;
+    z-index: 1000 !important;
+}
+
+.leaflet-popup-content {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    color: #333333 !important;
+    line-height: 1.4 !important;
+    margin: 0.75rem !important;
+    background: transparent !important;
+    background-color: transparent !important;
+}
+
+.leaflet-popup-content h6 {
+    border-bottom: 1px solid #eee;
+    padding-bottom: 8px;
+    margin: 0 0 0.5rem 0 !important;
+    color: #064669 !important;
+    font-size: 1.1rem !important;
+    font-weight: 600 !important;
+}
+
+.leaflet-popup-content p {
+    margin: 0.25rem 0 !important;
+    font-size: 0.9rem !important;
+    color: #333333 !important;
+}
+
+.leaflet-popup-content strong {
+    color: #064669 !important;
+    font-weight: 600 !important;
+}
+
+/* Estilos para la punta del popup */
+.leaflet-popup-tip {
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    border: 2px solid #e9ecef !important;
+    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Asegurar que el popup esté por encima de todo */
+.leaflet-popup {
+    z-index: 1000 !important;
+}
+
+.leaflet-popup-pane {
+    z-index: 1000 !important;
+}
+</style>
+{% endblock %}

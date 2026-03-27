@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+
+{% block title %}Auditoría de Accesos - Sistema REF{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Filtros -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-filter"></i> Filtros de Auditoría</h5>
+                </div>
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-3">
+                            <label for="dias" class="form-label">Período (días)</label>
+                            <select class="form-select" id="dias" name="dias">
+                                <option value="7" {% if dias == 7 %}selected{% endif %}>Últimos 7 días</option>
+                                <option value="30" {% if dias == 30 %}selected{% endif %}>Últimos 30 días</option>
+                                <option value="90" {% if dias == 90 %}selected{% endif %}>Últimos 90 días</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="tipo_accion" class="form-label">Tipo de Acción</label>
+                            <select class="form-select" id="tipo_accion" name="tipo_accion">
+                                <option value="">Todos los tipos</option>
+                                {% for tipo, descripcion in tipos_accion %}
+                                <option value="{{ tipo }}" {% if tipo_accion == tipo %}selected{% endif %}>{{ descripcion }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="usuario" class="form-label">Usuario</label>
+                            <input type="text" class="form-control" id="usuario" name="usuario" 
+                                   value="{{ usuario_filtro }}" placeholder="Nombre de usuario...">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">&nbsp;</label>
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-search"></i> Filtrar
+                                </button>
+                                <a href="{% url 'dashboard:auditoria' %}" class="btn btn-secondary btn-sm">
+                                    <i class="fas fa-times"></i> Limpiar
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Registros de Auditoría -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-history"></i> Registros de Auditoría</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Fecha/Hora</th>
+                                    <th>Usuario</th>
+                                    <th>Acción</th>
+                                    <th>Descripción</th>
+                                    <th>IP</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for registro in registros_auditoria %}
+                                <tr>
+                                    <td>
+                                        <small>{{ registro.fecha_accion|date:"d/m/Y" }}</small><br>
+                                        <strong>{{ registro.fecha_accion|time:"H:i:s" }}</strong>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2">
+                                                {{ registro.usuario.username|first|upper }}
+                                            </div>
+                                            <div>
+                                                <strong>{{ registro.usuario.username }}</strong><br>
+                                                <small class="text-muted">{{ registro.usuario.get_full_name|default:"-" }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if registro.tipo_accion == 'LOGIN' %}bg-success
+                                            {% elif registro.tipo_accion == 'LOGOUT' %}bg-secondary
+                                            {% elif registro.tipo_accion == 'VIEW' %}bg-info
+                                            {% elif registro.tipo_accion == 'CREATE' %}bg-primary
+                                            {% elif registro.tipo_accion == 'UPDATE' %}bg-warning text-dark
+                                            {% elif registro.tipo_accion == 'DELETE' %}bg-danger
+                                            {% elif registro.tipo_accion == 'SYNC' %}bg-success
+                                            {% elif registro.tipo_accion == 'EXPORT' %}bg-info
+                                            {% else %}bg-secondary{% endif %}">
+                                            {{ registro.get_tipo_accion_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span title="{{ registro.descripcion }}">
+                                            {{ registro.descripcion|truncatechars:50 }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <code>{{ registro.ip_address }}</code>
+                                    </td>
+                                    <td>
+                                        {% if registro.exitoso %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check"></i> Exitoso
+                                        </span>
+                                        {% else %}
+                                        <span class="badge bg-danger">
+                                            <i class="fas fa-times"></i> Fallido
+                                        </span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted">No hay registros de auditoría disponibles</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Paginación -->
+                    {% if registros_auditoria.has_other_pages %}
+                    <nav aria-label="Paginación de auditoría">
+                        <ul class="pagination justify-content-center">
+                            {% if registros_auditoria.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ registros_auditoria.previous_page_number }}{% if dias %}&dias={{ dias }}{% endif %}{% if tipo_accion %}&tipo_accion={{ tipo_accion }}{% endif %}{% if usuario_filtro %}&usuario={{ usuario_filtro }}{% endif %}">Anterior</a>
+                            </li>
+                            {% endif %}
+                            
+                            {% for num in registros_auditoria.paginator.page_range %}
+                            {% if registros_auditoria.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                            {% elif num > registros_auditoria.number|add:'-3' and num < registros_auditoria.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}{% if dias %}&dias={{ dias }}{% endif %}{% if tipo_accion %}&tipo_accion={{ tipo_accion }}{% endif %}{% if usuario_filtro %}&usuario={{ usuario_filtro }}{% endif %}">{{ num }}</a>
+                            </li>
+                            {% endif %}
+                            {% endfor %}
+                            
+                            {% if registros_auditoria.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ registros_auditoria.next_page_number }}{% if dias %}&dias={{ dias }}{% endif %}{% if tipo_accion %}&tipo_accion={{ tipo_accion }}{% endif %}{% if usuario_filtro %}&usuario={{ usuario_filtro }}{% endif %}">Siguiente</a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.avatar-sm {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.card {
+    transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+.table tbody tr {
+    transition: background-color 0.3s ease;
+}
+
+.table tbody tr:hover {
+    background-color: rgba(0, 123, 255, 0.1);
+}
+
+.badge {
+    font-size: 0.75em;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Operacionales Vigentes - REF{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">Operacionales Vigentes</h1>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Documentos de Seguridad</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for documento in documentos %}
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h6 class="card-title">{{ documento.titulo }}</h6>
+                                    <p class="card-text text-muted small">{{ documento.descripcion }}</p>
+                                    <a href="{{ documento.url_pdf }}" 
+                                       target="_blank" 
+                                       class="btn btn-primary btn-sm">
+                                        <i class="fas fa-file-pdf me-1"></i>
+                                        Ver PDF
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="col-12">
+                            <div class="alert alert-info text-center">
+                                <i class="fas fa-info-circle me-2"></i>
+                                No hay documentos operacionales disponibles para este torneo.
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+
+{% block title %}Clubes - Sistema REF{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Contenido Principal -->
+    <div class="row">
+        <div class="col-12">
+            <div class="dashboard-card no-header-bg">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Clubes</h5>
+                    <div class="btn-group" role="group">
+                        <button class="btn btn-success btn-sm" onclick="sincronizarTabla('clubes')" id="syncClubesBtn">
+                            <i class="fas fa-sync-alt"></i> Sincronizar Clubes
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Barra de búsqueda -->
+                    <div class="search-container">
+                        <form method="get" id="clubes-search-form">
+                            <input type="hidden" name="torneo" value="{{ filtros.torneo_selected }}">
+                            <div class="search-bar">
+                                <input type="text" class="search-input" name="busqueda" 
+                                       value="{{ filtros.busqueda }}" 
+                                       placeholder="Buscar por nombre del club, estadio o dirección..."
+                                       onkeypress="if(event.key==='Enter'){document.getElementById('clubes-search-form').submit();}">
+                                <i class="fas fa-search"></i>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <!-- Resultados de búsqueda -->
+                    {% if filtros.busqueda %}
+                    <div class="alert alert-info mb-3">
+                        <i class="fas fa-info-circle"></i>
+                        Mostrando resultados para: <strong>"{{ filtros.busqueda }}"</strong>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Cards de clubes -->
+                    <div class="clubes-grid">
+                        {% for club in clubes %}
+                        <div class="club-card">
+                            <div class="club-content">
+                                <div class="club-column-1">
+                                    <div class="club-logo">
+                                        {% if club.escudo_url %}
+                                            <img src="{{ club.escudo_url }}" alt="{{ club.nombre }}" class="club-escudo">
+                                        {% else %}
+                                            <div class="club-escudo-placeholder">
+                                                <i class="fas fa-shield-alt"></i>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <h6 class="club-nombre">{{ club.nombre }}</h6>
+                                </div>
+                                <div class="club-column-2">
+                                    <div class="club-details">
+                                        <div class="club-detail">
+                                            <strong>Estadio:</strong> {{ club.estadio }}
+                                        </div>
+                                        <div class="club-detail">
+                                            <strong>Capacidad:</strong> {{ club.capacidad|default:"No especificada" }}
+                                        </div>
+                                        <div class="club-detail">
+                                            <strong>Fundación:</strong> {{ club.fecha_fundacion|default:"No especificada" }}
+                                        </div>
+                                        <div class="club-detail">
+                                            <strong>Dirección:</strong> {{ club.direccion|default:"No especificada" }}
+                                        </div>
+                                        <div class="club-detail">
+                                            <strong>Ubicación Sede:</strong> {{ club.ubicacion_sede|default:"No especificada" }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="club-hinchas">
+                                <h6 class="hinchas-title">Hinchadas Caracterizadas</h6>
+                                <div class="hinchas-content barras-info">
+                                    {% if club.barras %}
+                                        <div>{{ club.barras|safe|linebreaks }}</div>
+                                    {% else %}
+                                        <p class="text-muted">No especificadas</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="no-clubes">
+                            <i class="fas fa-info-circle"></i>
+                            <p>No hay clubes disponibles</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Función para sincronizar una tabla específica
+function sincronizarTabla(tabla) {
+    const btnId = `sync${tabla.charAt(0).toUpperCase() + tabla.slice(1)}Btn`;
+    const btn = document.getElementById(btnId);
+    const icon = btn.querySelector('i');
+    
+    btn.disabled = true;
+    icon.className = 'fas fa-spinner fa-spin';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sincronizando...';
+    
+    const url = '{% url "dashboard:sincronizar_sheets" %}?torneo={{ filtros.torneo_selected }}&tabla=' + tabla;
+    
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const resultado = data.resultado;
+            showAlert(`${tabla.charAt(0).toUpperCase() + tabla.slice(1)} actualizado correctamente.`, 'success');
+            location.reload(); // Recargar la página para mostrar los datos actualizados
+        } else {
+            showAlert(`Error sincronizando ${tabla}: ${data.message || data.error}`, 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error de red o servidor:', error);
+        showAlert('Error de conexión con el servidor.', 'danger');
+    })
+    .finally(() => {
+        btn.disabled = false;
+        icon.className = 'fas fa-sync-alt';
+        btn.innerHTML = '<i class="fas fa-sync-alt"></i> Sincronizar ' + tabla.charAt(0).toUpperCase() + tabla.slice(1);
+    });
+}
+
+// Función para mostrar alertas
+function showAlert(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.parentNode.removeChild(alertDiv);
+        }
+    }, 5000);
+}
+</script>
+
+{% endblock %}

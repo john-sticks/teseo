@@ -1,0 +1,244 @@
+{% extends 'base.html' %}
+
+{% block title %}Usuarios Activos - Sistema REF{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Navegación de Secciones -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="btn-group w-100" role="group">
+                <a href="{% url 'dashboard:dashboard' %}" class="btn btn-outline-primary">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </a>
+                <a href="{% url 'dashboard:gestion_usuarios' %}" class="btn btn-outline-primary">
+                    <i class="fas fa-users"></i> Gestión de Usuarios
+                </a>
+                <a href="{% url 'dashboard:auditoria' %}" class="btn btn-outline-primary">
+                    <i class="fas fa-history"></i> Auditoría
+                </a>
+                <a href="{% url 'dashboard:usuarios_activos' %}" class="btn btn-primary">
+                    <i class="fas fa-user-check"></i> Usuarios Activos
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-success">{{ total_activos }}</h3>
+                    <p class="card-text">Usuarios Activos</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-info">{{ usuarios_activos|length }}</h3>
+                    <p class="card-text">Sesiones Activas</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-warning">
+                        {% for usuario in usuarios_activos %}
+                            {% if usuario.tiempo_inactivo.total_seconds > 1800 %}
+                                1
+                            {% endif %}
+                        {% endfor %}
+                    </h3>
+                    <p class="card-text">Inactivos > 30min</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Usuarios Activos -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-user-check"></i> Usuarios Actualmente Activos</h5>
+                    <small class="text-muted">Usuarios con sesiones activas en la última hora</small>
+                </div>
+                <div class="card-body">
+                    {% if usuarios_activos %}
+                    <div class="row">
+                        {% for usuario_info in usuarios_activos %}
+                        <div class="col-md-6 mb-3">
+                            <div class="card border-left-primary">
+                                <div class="card-body">
+                                    <div class="row align-items-center">
+                                        <div class="col-auto">
+                                            <div class="avatar-lg bg-primary text-white rounded-circle d-flex align-items-center justify-content-center">
+                                                {{ usuario_info.usuario.username|first|upper }}
+                                            </div>
+                                        </div>
+                                        <div class="col">
+                                            <div class="d-flex justify-content-between align-items-start">
+                                                <div>
+                                                    <h6 class="mb-1">
+                                                        <strong>{{ usuario_info.usuario.username }}</strong>
+                                                        {% if usuario_info.perfil %}
+                                                        <span class="badge 
+                                                            {% if usuario_info.perfil.rol == 'ADMINISTRADOR' %}bg-warning text-dark
+                                                            {% else %}bg-info{% endif %} ms-2">
+                                                            {{ usuario_info.perfil.get_rol_display }}
+                                                        </span>
+                                                        {% endif %}
+                                                    </h6>
+                                                    <p class="mb-1 text-muted">
+                                                        {{ usuario_info.usuario.get_full_name|default:"Sin nombre completo" }}
+                                                    </p>
+                                                    <p class="mb-0">
+                                                        <small class="text-muted">
+                                                            <i class="fas fa-envelope"></i> {{ usuario_info.usuario.email|default:"Sin email" }}
+                                                        </small>
+                                                    </p>
+                                                </div>
+                                                <div class="text-end">
+                                                    {% if usuario_info.tiempo_inactivo.total_seconds < 300 %}
+                                                    <span class="badge bg-success">
+                                                        <i class="fas fa-circle"></i> Activo
+                                                    </span>
+                                                    {% elif usuario_info.tiempo_inactivo.total_seconds < 1800 %}
+                                                    <span class="badge bg-warning text-dark">
+                                                        <i class="fas fa-circle"></i> Inactivo
+                                                    </span>
+                                                    {% else %}
+                                                    <span class="badge bg-danger">
+                                                        <i class="fas fa-circle"></i> Muy Inactivo
+                                                    </span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            
+                                            <hr class="my-2">
+                                            
+                                            <div class="row text-center">
+                                                <div class="col-4">
+                                                    <small class="text-muted">IP</small><br>
+                                                    <code>{{ usuario_info.ip_address }}</code>
+                                                </div>
+                                                <div class="col-4">
+                                                    <small class="text-muted">Inicio</small><br>
+                                                    <strong>{{ usuario_info.fecha_inicio|time:"H:i" }}</strong>
+                                                </div>
+                                                <div class="col-4">
+                                                    <small class="text-muted">Última Actividad</small><br>
+                                                    <strong>{{ usuario_info.fecha_ultima_actividad|time:"H:i" }}</strong>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="row text-center mt-2">
+                                                <div class="col-6">
+                                                    <small class="text-muted">Duración de Sesión</small><br>
+                                                    <strong>
+                                                        {% if usuario_info.duracion_sesion.days > 0 %}
+                                                            {{ usuario_info.duracion_sesion.days }}d {{ usuario_info.duracion_sesion.seconds|floatformat:0|div:3600|floatformat:0 }}h
+                                                        {% else %}
+                                                            {{ usuario_info.duracion_sesion.seconds|floatformat:0|div:3600|floatformat:0 }}h {{ usuario_info.duracion_sesion.seconds|floatformat:0|div:60|floatformat:0|add:"-1" }}m
+                                                        {% endif %}
+                                                    </strong>
+                                                </div>
+                                                <div class="col-6">
+                                                    <small class="text-muted">Tiempo Inactivo</small><br>
+                                                    <strong>
+                                                        {% if usuario_info.tiempo_inactivo.total_seconds < 60 %}
+                                                            {{ usuario_info.tiempo_inactivo.total_seconds|floatformat:0 }}s
+                                                        {% else %}
+                                                            {{ usuario_info.tiempo_inactivo.total_seconds|floatformat:0|div:60|floatformat:0 }}m
+                                                        {% endif %}
+                                                    </strong>
+                                                </div>
+                                            </div>
+                                            
+                                            {% if usuario_info.ubicacion %}
+                                            <div class="mt-2">
+                                                <small class="text-muted">
+                                                    <i class="fas fa-map-marker-alt"></i> {{ usuario_info.ubicacion }}
+                                                </small>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-user-slash fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No hay usuarios activos</h5>
+                        <p class="text-muted">No se encontraron usuarios con sesiones activas en la última hora.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Información Adicional -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="alert alert-info">
+                <h6><i class="fas fa-info-circle"></i> Información sobre Usuarios Activos</h6>
+                <ul class="mb-0">
+                    <li><strong>Activo:</strong> Última actividad hace menos de 5 minutos</li>
+                    <li><strong>Inactivo:</strong> Última actividad hace entre 5 y 30 minutos</li>
+                    <li><strong>Muy Inactivo:</strong> Última actividad hace más de 30 minutos</li>
+                    <li>Las sesiones se consideran activas si han tenido actividad en la última hora</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.avatar-lg {
+    width: 60px;
+    height: 60px;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.border-left-primary {
+    border-left: 4px solid #007bff !important;
+}
+
+.card {
+    transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.badge {
+    font-size: 0.75em;
+}
+
+code {
+    font-size: 0.8em;
+    background-color: #f8f9fa;
+    padding: 2px 4px;
+    border-radius: 3px;
+}
+</style>
+
+<script>
+// Auto-refresh cada 30 segundos
+setInterval(() => {
+    if (!document.hidden) {
+        location.reload();
+    }
+}, 30000);
+</script>
+{% endblock %}

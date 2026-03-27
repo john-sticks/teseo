@@ -1,0 +1,273 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ club.nombre }} - Sistema REF{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Header del Club -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-2 text-center">
+                            {% if club.escudo %}
+                                <img src="{{ club.escudo.url }}" 
+                                     alt="{{ club.nombre_corto }}" 
+                                     class="img-fluid" 
+                                     style="max-height: 100px;">
+                            {% else %}
+                                <div class="d-flex align-items-center justify-content-center bg-light rounded mx-auto" 
+                                     style="width: 100px; height: 100px;">
+                                    <i class="fas fa-shield-alt fa-3x text-muted"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-8">
+                            <h1 class="mb-1">{{ club.nombre }}</h1>
+                            <h4 class="text-muted mb-2">{{ club.nombre_corto }}</h4>
+                            <p class="mb-1">
+                                <i class="fas fa-map-marker-alt"></i> 
+                                {{ club.ciudad }}, {{ club.provincia }}
+                            </p>
+                            <p class="mb-0">
+                                <i class="fas fa-calendar"></i> 
+                                Fundado en {{ club.fundacion|date:"Y"|default:"No informado" }}
+                            </p>
+                        </div>
+                        <div class="col-md-2 text-end">
+                            <a href="{% url 'clubes:index' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left"></i> Volver
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card stat-card">
+                <div class="card-body text-center">
+                    <i class="fas fa-users fa-2x text-primary mb-2"></i>
+                    <h4 class="mb-0">{{ estadisticas.total_facciones }}</h4>
+                    <small class="text-muted">Facciones</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card stat-card">
+                <div class="card-body text-center">
+                    <i class="fas fa-user-tie fa-2x text-info mb-2"></i>
+                    <h4 class="mb-0">{{ estadisticas.total_referentes }}</h4>
+                    <small class="text-muted">Referentes</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card stat-card">
+                <div class="card-body text-center">
+                    <i class="fas fa-map-marker-alt fa-2x text-warning mb-2"></i>
+                    <h4 class="mb-0">{{ estadisticas.total_territorios }}</h4>
+                    <small class="text-muted">Territorios</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card stat-card">
+                <div class="card-body text-center">
+                    <i class="fas fa-exclamation-triangle fa-2x text-danger mb-2"></i>
+                    <h4 class="mb-0">{{ estadisticas.total_antecedentes }}</h4>
+                    <small class="text-muted">Antecedentes</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Información Institucional -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-building"></i> Información Institucional</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <h6 class="text-muted">Estadio</h6>
+                            <p class="mb-0">{{ club.estadio }}</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <h6 class="text-muted">Dirección</h6>
+                            <p class="mb-0">{{ club.direccion_estadio }}</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <h6 class="text-muted">Teléfono</h6>
+                            <p class="mb-0">{{ club.telefono|default:"No informado" }}</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <h6 class="text-muted">Email</h6>
+                            <p class="mb-0">
+                                {% if club.email %}
+                                    <a href="mailto:{{ club.email }}">{{ club.email }}</a>
+                                {% else %}
+                                    No informado
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <h6 class="text-muted">Sitio Web</h6>
+                            <p class="mb-0">
+                                {% if club.sitio_web %}
+                                    <a href="{{ club.sitio_web }}" target="_blank">{{ club.sitio_web }}</a>
+                                {% else %}
+                                    No informado
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <h6 class="text-muted">Presidente</h6>
+                            <p class="mb-0">{{ club.presidente|default:"No informado" }}</p>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <h6 class="text-muted">Colores</h6>
+                            <p class="mb-0">{{ club.colores|default:"No informado" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Información de Hinchas Caracterizados -->
+        {% if club.barras %}
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-users"></i> Hinchada Caracterizada</h5>
+                </div>
+                <div class="card-body">
+                    <div class="barras-info">
+                        {{ club.barras|safe|linebreaks }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Facciones de Hinchadas -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-users"></i> Facciones de Hinchadas</h5>
+                    <a href="{% url 'clubes:facciones' club.id %}" class="btn btn-sm btn-outline-light">
+                        Ver Todas
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if facciones %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Nombre</th>
+                                        <th>Tipo</th>
+                                        <th>Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for faccion in facciones %}
+                                    <tr>
+                                        <td>{{ faccion.nombre }}</td>
+                                        <td>
+                                            <span class="badge bg-secondary">
+                                                {{ faccion.get_tipo_display }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if faccion.activa %}
+                                                <span class="badge bg-success">Activa</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">Inactiva</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center text-muted py-3">
+                            <i class="fas fa-users fa-2x mb-2"></i>
+                            <p>No hay facciones registradas</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Antecedentes Recientes -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-exclamation-triangle"></i> Antecedentes Recientes</h5>
+                    <a href="{% url 'clubes:antecedentes' club.id %}" class="btn btn-sm btn-outline-light">
+                        Ver Todos
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if antecedentes %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th>Tipo</th>
+                                        <th>Descripción</th>
+                                        <th>Lugar</th>
+                                        <th>Sanción</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for antecedente in antecedentes %}
+                                    <tr>
+                                        <td>{{ antecedente.fecha_incidente|date:"d/m/Y" }}</td>
+                                        <td>
+                                            <span class="badge 
+                                                {% if antecedente.tipo == 'INCIDENTE' %}bg-warning
+                                                {% elif antecedente.tipo == 'VIOLENCIA' %}bg-danger
+                                                {% elif antecedente.tipo == 'SANCIÓN' %}bg-info
+                                                {% else %}bg-secondary
+                                                {% endif %}">
+                                                {{ antecedente.get_tipo_display }}
+                                            </span>
+                                        </td>
+                                        <td>{{ antecedente.descripcion|truncatechars:100 }}</td>
+                                        <td>{{ antecedente.lugar }}</td>
+                                        <td>
+                                            {% if antecedente.monto_sancion %}
+                                                ${{ antecedente.monto_sancion|floatformat:2 }}
+                                            {% else %}
+                                                {{ antecedente.sancion_impuesta|default:"-" }}
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center text-muted py-4">
+                            <i class="fas fa-exclamation-triangle fa-3x mb-3"></i>
+                            <p>No hay antecedentes registrados</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

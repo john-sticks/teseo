@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+
+{% block title %}Operacionales Vigentes - Sistema REF{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Contenido Principal -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-file-alt"></i> Operacionales Vigentes - {{ filtros.torneo_selected }}</h5>
+                    <div class="btn-group" role="group">
+                        <button class="btn btn-success btn-sm" onclick="sincronizarTabla('operacionales')" id="syncOperacionalesBtn">
+                            <i class="fas fa-sync-alt"></i> Sincronizar
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Tipo</th>
+                                    <th>URL</th>
+                                    <th>Última Actualización</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for operacional in operacionales %}
+                                <tr>
+                                    <td>{{ operacional.name }}</td>
+                                    <td>
+                                        <span class="badge bg-info">PDF</span>
+                                    </td>
+                                    <td>
+                                        {% if operacional.url %}
+                                            <a href="{{ operacional.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-external-link-alt"></i> Ver
+                                            </a>
+                                        {% else %}
+                                            <span class="text-muted">No disponible</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ operacional.updated_at|date:"d/m/Y H:i" }}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-secondary" onclick="verDetalles('{{ operacional.name }}', '{{ operacional.url }}')">
+                                            <i class="fas fa-info-circle"></i> Detalles
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted">No hay documentos operacionales disponibles</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para detalles -->
+<div class="modal fade" id="detallesModal" tabindex="-1" aria-labelledby="detallesModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="detallesModalLabel">Detalles del Documento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="detallesModalBody">
+                <!-- Contenido dinámico -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function verDetalles(nombre, url) {
+    const modal = document.getElementById('detallesModal');
+    const modalBody = document.getElementById('detallesModalBody');
+    
+    modalBody.innerHTML = `
+        <h6>Nombre del Documento:</h6>
+        <p>${nombre}</p>
+        
+        <h6>URL:</h6>
+        <p><a href="${url}" target="_blank">${url}</a></p>
+        
+        <h6>Acciones:</h6>
+        <a href="${url}" target="_blank" class="btn btn-primary">
+            <i class="fas fa-external-link-alt"></i> Abrir Documento
+        </a>
+    `;
+    
+    const bootstrapModal = new bootstrap.Modal(modal);
+    bootstrapModal.show();
+}
+
+// Función para sincronizar una tabla específica
+function sincronizarTabla(tabla) {
+    const btnId = `sync${tabla.charAt(0).toUpperCase() + tabla.slice(1)}Btn`;
+    const btn = document.getElementById(btnId);
+    const icon = btn.querySelector('i');
+    
+    btn.disabled = true;
+    icon.className = 'fas fa-spinner fa-spin';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sincronizando...';
+    
+    const url = '{% url "dashboard:sincronizar_sheets" %}?torneo={{ filtros.torneo_selected }}&tabla=' + tabla;
+    
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const resultado = data.resultado;
+            showAlert(`${tabla.charAt(0).toUpperCase() + tabla.slice(1)} actualizado correctamente.`, 'success');
+            location.reload(); // Recargar la página para mostrar los datos actualizados
+        } else {
+            showAlert(`Error sincronizando ${tabla}: ${data.message || data.error}`, 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error de red o servidor:', error);
+        showAlert('Error de conexión con el servidor.', 'danger');
+    })
+    .finally(() => {
+        btn.disabled = false;
+        icon.className = 'fas fa-sync-alt';
+        btn.innerHTML = '<i class="fas fa-sync-alt"></i> Sincronizar';
+    });
+}
+
+// Función para mostrar alertas
+function showAlert(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.parentNode.removeChild(alertDiv);
+        }
+    }, 5000);
+}
+</script>
+{% endblock %}

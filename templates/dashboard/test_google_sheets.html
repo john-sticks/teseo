@@ -1,0 +1,184 @@
+{% extends 'base.html' %}
+
+{% block title %}Estado de Google Sheets API - Sistema REF{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-link"></i> Estado de Google Sheets API</h5>
+                    <a href="{% url 'dashboard:dashboard' %}" class="btn btn-secondary btn-sm">
+                        <i class="fas fa-arrow-left"></i> Volver al Dashboard
+                    </a>
+                </div>
+                <div class="card-body">
+                    
+                    <!-- Estado de Conexión -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6><i class="fas fa-plug"></i> Estado de Conexión</h6>
+                            {% if conexion_ok %}
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle"></i>
+                                <strong>✅ Conexión establecida</strong> - La API de Google Sheets está funcionando correctamente.
+                            </div>
+                            {% else %}
+                            <div class="alert alert-danger">
+                                <i class="fas fa-times-circle"></i>
+                                <strong>❌ Sin conexión</strong> - No se pudo establecer conexión con Google Sheets API.
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Prueba de Escritura -->
+                    {% if conexion_ok %}
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6><i class="fas fa-pen"></i> Prueba de Escritura</h6>
+                            {% if prueba_hoja_ok %}
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle"></i>
+                                <strong>🎉 ¡Prueba exitosa!</strong> - El robot puede escribir correctamente en Google Sheets.
+                                <br><small class="text-muted">Se escribió un mensaje de prueba en la hoja de verificación.</small>
+                            </div>
+                            {% else %}
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <strong>⚠️ Prueba fallida</strong> - No se pudo escribir en la hoja de prueba.
+                                <br><small class="text-muted">Verifica que la hoja esté compartida con permisos de Editor.</small>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if conexion_ok %}
+                    <!-- Estado de Permisos por Hoja -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6><i class="fas fa-shield-alt"></i> Estado de Permisos por Hoja</h6>
+                            
+                            {% for torneo, tipos in permisos_hojas.items %}
+                            <div class="card mb-3">
+                                <div class="card-header">
+                                    <h6 class="mb-0">{{ torneo }}</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>Tipo de Hoja</th>
+                                                    <th>ID de Spreadsheet</th>
+                                                    <th>Estado</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for tipo, info in tipos.items %}
+                                                <tr>
+                                                    <td>{{ tipo|title }}</td>
+                                                    <td>
+                                                        <code>{{ info.spreadsheet_id }}</code>
+                                                    </td>
+                                                    <td>
+                                                        {% if info.tiene_permisos %}
+                                                        <span class="badge bg-success">
+                                                            <i class="fas fa-check"></i> Con Permisos
+                                                        </span>
+                                                        {% else %}
+                                                        <span class="badge bg-danger">
+                                                            <i class="fas fa-times"></i> Sin Permisos
+                                                        </span>
+                                                        {% endif %}
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Instrucciones para Configurar Permisos -->
+                    {% if errores %}
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="alert alert-warning">
+                                <h6><i class="fas fa-exclamation-triangle"></i> Configuración de Permisos Requerida</h6>
+                                <p>Para habilitar la edición en Google Sheets, necesitas compartir las hojas con la cuenta de servicio:</p>
+                                
+                                <div class="alert alert-info">
+                                    <strong>📧 Email de la cuenta de servicio:</strong><br>
+                                    <code>ref-583@just-coda-473000-f4.iam.gserviceaccount.com</code>
+                                </div>
+                                
+                                <h6>📋 Pasos para configurar permisos:</h6>
+                                <ol>
+                                    <li>Ve a Google Sheets</li>
+                                    <li>Abre la hoja que quieres editar</li>
+                                    <li>Haz clic en <strong>"Compartir"</strong> (botón azul en la esquina superior derecha)</li>
+                                    <li>Agrega el email: <code>ref-583@just-coda-473000-f4.iam.gserviceaccount.com</code></li>
+                                    <li>Selecciona <strong>"Editor"</strong> como permiso (no solo "Visualizador")</li>
+                                    <li>Haz clic en <strong>"Enviar"</strong></li>
+                                </ol>
+                                
+                                <h6>⚠️ Hojas que necesitan configuración:</h6>
+                                <ul>
+                                    {% for error in errores %}
+                                    <li><code>{{ error }}</code></li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="alert alert-success">
+                                <h6><i class="fas fa-check-circle"></i> ¡Todos los permisos están configurados!</h6>
+                                <p>Puedes usar la funcionalidad de edición completa en Google Sheets.</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% endif %}
+
+                    <!-- Funcionalidad Actual -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <h6><i class="fas fa-info-circle"></i> Funcionalidad Disponible</h6>
+                                <ul class="mb-0">
+                                    <li><strong>✅ Edición en Base de Datos Local:</strong> Siempre funciona</li>
+                                    <li><strong>✅ Sincronización de Datos:</strong> Funciona para lectura</li>
+                                    {% if conexion_ok and not errores %}
+                                    <li><strong>✅ Edición en Google Sheets:</strong> Completamente funcional</li>
+                                    {% else %}
+                                    <li><strong>⚠️ Edición en Google Sheets:</strong> Requiere configuración de permisos</li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Botón para probar nuevamente -->
+                    <div class="row">
+                        <div class="col-12">
+                            <a href="{% url 'dashboard:test_google_sheets' %}" class="btn btn-primary">
+                                <i class="fas fa-sync-alt"></i> Verificar Estado Nuevamente
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
