@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-your-secret-key-here-change-in-production'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'testserver','ref-ya68.onrender.com']
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'icia-monitoreo,127.0.0.1,localhost').split(',')
 
 
 # Application definition
