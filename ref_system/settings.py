@@ -151,10 +151,13 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 
+# Subpath — sirve la app bajo /teseo/ igual que el resto del sistema
+FORCE_SCRIPT_NAME = '/teseo'
+
 # Login/Logout URLs
-LOGIN_URL = '/login/'
-LOGIN_REDIRECT_URL = '/'
-LOGOUT_REDIRECT_URL = '/login/'
+LOGIN_URL = '/teseo/login/'
+LOGIN_REDIRECT_URL = '/teseo/'
+LOGOUT_REDIRECT_URL = '/teseo/login/'
 
 # Autenticación
 AUTHENTICATION_BACKENDS = [
