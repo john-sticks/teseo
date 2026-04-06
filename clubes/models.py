@@ -1,5 +1,5 @@
+from django.conf import settings
 from django.db import models
-from django.contrib.auth.models import User
 from django.utils import timezone
 
 
@@ -23,7 +23,7 @@ class Club(models.Model):
     presidente = models.CharField(max_length=100, blank=True, null=True)
     
     # Metadatos
-    creado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    creado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, db_constraint=False)
     fecha_creacion = models.DateTimeField(default=timezone.now)
     ultima_actualizacion = models.DateTimeField(auto_now=True)
     
@@ -125,7 +125,7 @@ class AntecedenteClub(models.Model):
     observaciones = models.TextField(blank=True, null=True)
     
     # Metadatos
-    registrado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    registrado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, db_constraint=False)
     fecha_registro = models.DateTimeField(default=timezone.now)
     
     def __str__(self):

@@ -4,7 +4,7 @@ Middleware simplificado para auditoría básica.
 import logging
 from django.utils.deprecation import MiddlewareMixin
 from django.utils import timezone
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 
 logger = logging.getLogger(__name__)
 

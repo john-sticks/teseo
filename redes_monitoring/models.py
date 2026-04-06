@@ -1,5 +1,5 @@
+from django.conf import settings
 from django.db import models
-from django.contrib.auth.models import User
 from django.utils import timezone
 
 
@@ -34,7 +34,7 @@ class AlertaRedes(models.Model):
     # Metadatos
     fecha_alerta = models.DateTimeField(default=timezone.now)
     procesado = models.BooleanField(default=False)
-    procesado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    procesado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, db_constraint=False)
     fecha_procesamiento = models.DateTimeField(blank=True, null=True)
     
     def __str__(self):

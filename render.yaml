@@ -14,5 +14,23 @@ services:
         value: "ref-ya68.onrender.com,127.0.0.1,localhost"
       - key: SECRET_KEY
         generateValue: true
-      - key: DATABASE_URL
-        value: "sqlite:///db.sqlite3"
+      - key: DB_HOST
+        value: "127.0.0.1"
+      - key: DB_PORT
+        value: "3306"
+      - key: DB_NAME
+        value: "teseo"
+      - key: DB_USER
+        sync: false
+      - key: DB_PASS
+        sync: false
+      - key: CERBERUS_DB_NAME
+        value: "usuarios"
+      - key: CERBERUS_HOST
+        sync: false
+      - key: CERBERUS_PORT
+        value: "8004"
+      - key: APP_API_KEY
+        sync: false
+      - key: CERBERUS_JWT_SECRET
+        sync: false
