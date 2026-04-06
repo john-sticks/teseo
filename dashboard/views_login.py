@@ -5,7 +5,6 @@ from django.contrib import messages
 from django.views.decorators.http import require_http_methods
 
 from .backends import CerberusBackend
-from .services.cerberus_service import CerberusService
 
 logger = logging.getLogger(__name__)
 
@@ -19,15 +18,6 @@ def login_view(request):
         username = request.POST.get("username", "").strip()
         password = request.POST.get("password", "")
 
-        # Verificar rate limiting antes de intentar autenticar
-        bloqueada, intentos_restantes, tiempo_espera = CerberusService.ip_habilitada(request)
-        if bloqueada:
-            messages.error(
-                request,
-                f"Demasiados intentos fallidos. Intente nuevamente en {tiempo_espera} segundos."
-            )
-            return render(request, "auth/login.html")
-
         backend = CerberusBackend()
         user = backend.authenticate(request, username=username, password=password)
 
@@ -36,14 +26,7 @@ def login_view(request):
             logger.info(f"Login exitoso: {username}")
             return redirect(request.GET.get("next", "dashboard:dashboard"))
         else:
-            CerberusService.sumar_intento_fallido(request)
-            if intentos_restantes is not None:
-                messages.error(
-                    request,
-                    f"Credenciales incorrectas. Intentos restantes: {intentos_restantes}."
-                )
-            else:
-                messages.error(request, "Credenciales incorrectas o servicio no disponible.")
+            messages.error(request, "Credenciales incorrectas o servicio no disponible.")
             logger.warning(f"Login fallido para usuario: {username}")
 
     return render(request, "auth/login.html")
