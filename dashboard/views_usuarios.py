@@ -4,7 +4,8 @@ Vistas para gestión de usuarios y auditoría.
 import logging
 from datetime import datetime, timedelta
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import login, logout, get_user_model
+from django.contrib.auth import login, logout
+from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from django.http import JsonResponse
@@ -39,8 +40,7 @@ def gestion_usuarios_view(request):
         estado_filtro = request.GET.get('estado', '')
         
         # Obtener usuarios con perfiles
-        User = get_user_model()
-        usuarios_query = User.objects.using('cerberus').all()
+        usuarios_query = User.objects.select_related('perfil').all()
         
         # Aplicar filtros
         if busqueda:
@@ -65,9 +65,8 @@ def gestion_usuarios_view(request):
         usuarios = paginator.get_page(page_number)
         
         # Estadísticas
-        User = get_user_model()
-        total_usuarios = User.objects.using('cerberus').count()
-        usuarios_activos = User.objects.using('cerberus').filter(estado=True).count()
+        total_usuarios = User.objects.count()
+        usuarios_activos = User.objects.filter(is_active=True).count()
         administradores = PerfilUsuario.objects.filter(rol='ADMINISTRADOR').count()
         visitas = PerfilUsuario.objects.filter(rol='VISITA').count()
         

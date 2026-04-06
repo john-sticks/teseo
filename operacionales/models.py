@@ -1,4 +1,4 @@
-from django.conf import settings
+from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
 
@@ -25,7 +25,7 @@ class OperacionalVigente(models.Model):
     activo = models.BooleanField(default=True)
     
     # Metadatos
-    creado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, db_constraint=False)
+    creado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     fecha_registro = models.DateTimeField(default=timezone.now)
     ultima_actualizacion = models.DateTimeField(auto_now=True)
     

@@ -1,7 +1,7 @@
 """
 Modelos para auditoría de accesos y acciones de usuarios.
 """
-from django.conf import settings
+from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
 from django.contrib.contenttypes.models import ContentType
@@ -22,7 +22,7 @@ class TipoAccion(models.TextChoices):
 class AuditoriaAcceso(models.Model):
     """Modelo para registrar accesos y acciones de usuarios."""
     
-    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='auditoria_accesos', db_constraint=False)
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='auditoria_accesos')
     tipo_accion = models.CharField(max_length=20, choices=TipoAccion.choices)
     descripcion = models.TextField()
     ip_address = models.GenericIPAddressField()
@@ -56,7 +56,7 @@ class AuditoriaAcceso(models.Model):
 class SesionUsuario(models.Model):
     """Modelo para rastrear sesiones activas de usuarios."""
     
-    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='sesiones', db_constraint=False)
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sesiones')
     session_key = models.CharField(max_length=40, unique=True)
     ip_address = models.GenericIPAddressField()
     user_agent = models.TextField()
@@ -93,7 +93,7 @@ class PerfilUsuario(models.Model):
         ('VISITA', 'Visita'),
     ]
     
-    usuario = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='perfil', db_constraint=False)
+    usuario = models.OneToOneField(User, on_delete=models.CASCADE, related_name='perfil')
     rol = models.CharField(max_length=20, choices=ROLES_CHOICES, default='VISITA')
     telefono = models.CharField(max_length=20, blank=True, null=True)
     departamento = models.CharField(max_length=100, blank=True, null=True)

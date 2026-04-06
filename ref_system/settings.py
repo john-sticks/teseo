@@ -38,15 +38,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'cerberus_user',
     'dashboard',
     'clubes',
     'derecho_admision',
     'operacionales',
     'redes_monitoring',
 ]
-
-AUTH_USER_MODEL = 'cerberus_user.UsuarioCerberus'
 
 MIDDLEWARE = [
     'whitenoise.middleware.WhiteNoiseMiddleware',
@@ -86,13 +83,7 @@ WSGI_APPLICATION = 'ref_system.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-_DB_OPTIONS = {
-    'charset': 'utf8mb4',
-    'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-}
-
 DATABASES = {
-    # Base de datos propia de Teseo (tablas de encuentros, incidentes, clubes, etc.)
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': os.environ.get('DB_NAME', 'teseo'),
@@ -100,21 +91,12 @@ DATABASES = {
         'PASSWORD': os.environ.get('DB_PASS', ''),
         'HOST': os.environ.get('DB_HOST', '172.17.0.1'),
         'PORT': os.environ.get('DB_PORT', '3306'),
-        'OPTIONS': _DB_OPTIONS,
-    },
-    # Base de datos compartida de Cerberus (tabla usuarios — misma que usa el resto del sistema)
-    'cerberus': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.environ.get('CERBERUS_DB_NAME', 'usuarios'),
-        'USER': os.environ.get('DB_USER', 'root'),
-        'PASSWORD': os.environ.get('DB_PASS', ''),
-        'HOST': os.environ.get('DB_HOST', '172.17.0.1'),
-        'PORT': os.environ.get('DB_PORT', '3306'),
-        'OPTIONS': _DB_OPTIONS,
+        'OPTIONS': {
+            'charset': 'utf8mb4',
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+        },
     },
 }
-
-DATABASE_ROUTERS = ['ref_system.db_router.CerberusRouter']
 
 
 # Password validation
@@ -183,7 +165,6 @@ AUTHENTICATION_BACKENDS = [
 CERBERUS_HOST = os.environ.get('CERBERUS_HOST', '172.17.0.1')
 CERBERUS_PORT = os.environ.get('CERBERUS_PORT', '8004')
 CERBERUS_API = f"http://{CERBERUS_HOST}:{CERBERUS_PORT}/cerberus/api/v1"
-CERBERUS_API_KEY = os.environ.get('APP_API_KEY', '')
 CERBERUS_JWT_SECRET = os.environ.get('CERBERUS_JWT_SECRET', '')
 
 # Google Sheets Configuration

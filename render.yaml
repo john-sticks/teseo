@@ -24,8 +24,6 @@ services:
         sync: false
       - key: DB_PASS
         sync: false
-      - key: CERBERUS_DB_NAME
-        value: "usuarios"
       - key: CERBERUS_HOST
         sync: false
       - key: CERBERUS_PORT

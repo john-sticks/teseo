@@ -1,4 +1,4 @@
-from django.conf import settings
+from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
 import json
@@ -45,7 +45,7 @@ class Encuentro(models.Model):
     nivel_riesgo = models.CharField(max_length=10, choices=NIVEL_RIESGO_CHOICES, default='BAJO')
     motivo_alerta = models.TextField(blank=True, null=True)
     relato_hecho = models.TextField(blank=True, null=True)
-    creado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, db_constraint=False)
+    creado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     fecha_creacion = models.DateTimeField(default=timezone.now)
     
     # Campos para sincronización con Google Sheets
@@ -82,7 +82,7 @@ class Incidente(models.Model):
     latitud = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     longitud = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     fecha_incidente = models.DateTimeField()
-    reportado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, db_constraint=False)
+    reportado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     
     # Campos para sincronización con Google Sheets
     external_id = models.CharField(max_length=200, unique=True, blank=True, null=True)
